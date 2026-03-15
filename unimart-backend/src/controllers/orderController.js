@@ -1,55 +1,77 @@
-// @desc    Verify PIN, Complete Delivery, and Update Wallet
-// @route   POST /api/orders/:id/verify
-// @access  Private (Runner)
-exports.verifyDelivery = async (req, res) => {
+const Order = require('../models/Order');
+const User = require('../models/User');
+
+exports.createOrder = async (req, res, next) => {
+  try {
+    const { itemDetails, deliveryFee, pickupCoordinates, dropoffCoordinates } = req.body;
+    const generatedPIN = Math.floor(1000 + Math.random() * 9000).toString();
+
+    const order = await Order.create({
+      buyerId: req.user._id,
+      itemDetails, deliveryFee, deliveryPIN: generatedPIN,
+      pickupLocation: { type: 'Point', coordinates: pickupCoordinates },
+      dropoffLocation: { type: 'Point', coordinates: dropoffCoordinates }
+    });
+    res.status(201).json({ success: true, data: order });
+  } catch (error) { next(error); }
+};
+
+exports.acceptOrder = async (req, res, next) => {
   try {
     const orderId = req.params.id;
-    const runnerId = req.user._id;
-    const { enteredPIN } = req.body; // The 4 digits the runner typed in
-
-    // 1. Find the active order
-    const order = await Order.findById(orderId);
-
-    if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+    const orderCheck = await Order.findById(orderId);
+    if (!orderCheck || orderCheck.buyerId.toString() === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'Cannot accept this order' });
     }
 
-    // 2. Security Checks
-    if (order.runnerId.toString() !== runnerId.toString()) {
-      return res.status(403).json({ success: false, message: 'You are not the assigned runner for this errand' });
-    }
-    if (order.status !== 'ACCEPTED' && order.status !== 'PICKED_UP') {
-      return res.status(400).json({ success: false, message: 'Order is not in a deliverable state' });
-    }
-
-    // 3. The Ultimate Check: Does the PIN match?
-    if (order.deliveryPIN !== enteredPIN) {
-      return res.status(400).json({ success: false, message: 'Incorrect PIN. Please ask the buyer again.' });
-    }
-
-    // 4. The Financial Transaction (Update Order & Wallet simultaneously)
-    // We mark the order complete
-    order.status = 'COMPLETED';
-    await order.save();
-
-    // We find the Runner and add the delivery fee to their digital wallet
-    const User = require('../models/User'); // Bring in the User model
-    const updatedRunner = await User.findByIdAndUpdate(
-      runnerId,
-      { 
-        $inc: { walletBalance: order.deliveryFee, totalRuns: 1 } // $inc mathematically adds to the existing number
-      },
+    const securedOrder = await Order.findOneAndUpdate(
+      { _id: orderId, status: 'PENDING' },
+      { status: 'ACCEPTED', runnerId: req.user._id },
       { new: true }
     );
 
-    // 5. Success! The UI will now show the runner their new balance
-    res.status(200).json({
-      success: true,
-      message: 'Delivery verified! Funds added to your wallet.',
-      newBalance: updatedRunner.walletBalance
-    });
+    if (!securedOrder) return res.status(409).json({ success: false, message: 'Task no longer available' });
+    res.status(200).json({ success: true, data: securedOrder });
+  } catch (error) { next(error); }
+};
 
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+exports.verifyDelivery = async (req, res, next) => {
+  try {
+    const { enteredPIN } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order || order.runnerId.toString() !== req.user._id.toString() || order.deliveryPIN !== enteredPIN) {
+      return res.status(400).json({ success: false, message: 'Invalid PIN or Order' });
+    }
+
+    order.status = 'COMPLETED';
+    await order.save();
+
+    const updatedRunner = await User.findByIdAndUpdate(
+      req.user._id, { $inc: { walletBalance: order.deliveryFee, totalRuns: 1 } }, { new: true }
+    );
+
+    res.status(200).json({ success: true, newBalance: updatedRunner.walletBalance });
+  } catch (error) { next(error); }
+};
+
+exports.getCustomerDashboard = async (req, res, next) => {
+  try {
+    const orders = await Order.find({ buyerId: req.user._id }).sort({ createdAt: -1 }).populate('runnerId', 'name rating');
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) { next(error); }
+};
+
+exports.getRunnerDashboard = async (req, res, next) => {
+  try {
+    const runs = await Order.find({ runnerId: req.user._id }).sort({ createdAt: -1 }).populate('buyerId', 'name hostelBlock');
+    res.status(200).json({ success: true, data: runs });
+  } catch (error) { next(error); }
+};
+
+exports.getAvailableTasks = async (req, res, next) => {
+  try {
+    const tasks = await Order.find({ status: 'PENDING', buyerId: { $ne: req.user._id } }).sort({ createdAt: 1 });
+    res.status(200).json({ success: true, data: tasks });
+  } catch (error) { next(error); }
 };
