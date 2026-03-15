@@ -1,6 +1,10 @@
 const User = require('../models/User');
+const OTP = require('../models/OTP'); // FIX 1: Imported the OTP model!
 const sendEmail = require('../utils/sendEmail');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
+
 
 const sendTokenResponse = (user, statusCode, res) => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -19,39 +23,93 @@ const sendTokenResponse = (user, statusCode, res) => {
 exports.registerUser = async (req, res, next) => {
   try {
     const { name, email, password, hostelBlock } = req.body;
-    let user = await User.findOne({ email });
 
-    if (user && user.isVerified) {
-      return res.status(400).json({ success: false, message: 'User already verified. Please log in.' });
+    // 1. Check if they are ALREADY a fully registered user
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'User already exists. Please log in.' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpire = new Date(Date.now() + 10 * 60 * 1000); 
+    // 2. Hash the password immediately
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    if (!user) {
-      user = await User.create({ name, email, password, hostelBlock, verificationOTP: otp, verificationOTPExpire: otpExpire, isVerified: false });
-    } else {
-      user.verificationOTP = otp; user.verificationOTPExpire = otpExpire; await user.save();
-    }
+    // 3. Generate the 6-digit OTP
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    await sendEmail({ email: user.email, subject: 'UniMart Verification', message: `Your OTP is: ${otp}` });
-    res.status(200).json({ success: true, message: 'OTP sent to university email.' });
-  } catch (error) { next(error); }
+    // 4. Check if they already have a pending OTP and delete it so we can send a fresh one
+    await OTP.deleteMany({ email });
+
+    // 5. Save them to the TEMPORARY waiting room (Not the User database!)
+    await OTP.create({
+      name,
+      email: email.toLowerCase().trim(),
+      password: hashedPassword,
+      hostelBlock,
+      otp: generatedOtp
+    });
+
+    // 6. Send the email (Uncomment when nodemailer is ready)
+     await sendEmail({ email, subject: 'UniMart Verification', message: `Your OTP is: ${generatedOtp}` });
+    
+    // For Thunder Client testing before email is set up, print it to terminal:
+    console.log(`\n=== OTP for ${email} is: ${generatedOtp} ===\n`);
+
+    res.status(200).json({ success: true, message: 'OTP sent to email. Please verify to complete registration.' });
+  } catch (error) { 
+    next(error); 
+  }
 };
 
 exports.verifyOTP = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
-    const user = await User.findOne({ email }).select('+verificationOTP +verificationOTPExpire');
-
-    if (!user || user.isVerified || user.verificationOTP !== otp || user.verificationOTPExpire < Date.now()) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    // 0. Safety Check: Did the frontend actually send the data?
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Please provide both email and OTP.' });
+    }
+    
+    // 1. Data Normalization: Prevent typo-based rejections
+    const stringOtp = otp.toString().trim();
+    const dbName = mongoose.connection.name;
+    const collectionName = OTP.collection.name;
+    const totalInCollection = await OTP.countDocuments();
+    
+    // 2. Look for them in the temporary OTP database
+    // Using sort({ createdAt: -1 }) guarantees we check the NEWEST OTP if they requested multiple
+    const pendingRegistration = await OTP.findOne({ email: email }).sort({ createdAt: -1 });
+    if (!pendingRegistration) {
+      return res.status(400).json({ success: false, message: 'OTP expired or email not found. Please register again.' });
     }
 
-    user.isVerified = true; user.verificationOTP = undefined; user.verificationOTPExpire = undefined;
-    await user.save();
-    sendTokenResponse(user, 200, res);
-  } catch (error) { next(error); }
+    // 3. Check if the OTP matches
+    if (pendingRegistration.otp !== stringOtp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP.' });
+    }
+
+    // 4. SUCCESS! Move them to the permanent User database
+    const newUser = await User.create({
+      name: pendingRegistration.name,
+      email: pendingRegistration.email,
+      password: pendingRegistration.password, // Already hashed in the register step
+      hostelBlock: pendingRegistration.hostelBlock
+    });
+
+    // 5. Clean up: Delete ALL temporary records for this email
+    await OTP.deleteMany({ email: email });
+
+    // 6. Send the secure cookie and log them in
+    sendTokenResponse(newUser, 201, res);
+
+  } catch (error) { 
+    // 7. The Ultimate Safety Net: If they double-click the verify button, Mongoose might try to create them twice.
+    // Error code 11000 means "Duplicate Key" (email already exists in User DB).
+    if (error.code === 11000) {
+      await OTP.deleteMany({ email: req.body.email }); // Clean up the waiting room
+      return res.status(400).json({ success: false, message: 'User is already verified and registered. Please log in.' });
+    }
+    next(error); 
+  }
 };
 
 exports.loginUser = async (req, res, next) => {
@@ -62,12 +120,13 @@ exports.loginUser = async (req, res, next) => {
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-    if (!user.isVerified) {
-      return res.status(401).json({ success: false, message: 'Please verify your email first.' });
-    }
+
+    // FIX 2: Removed the obsolete isVerified check here!
 
     sendTokenResponse(user, 200, res);
-  } catch (error) { next(error); }
+  } catch (error) { 
+    next(error); 
+  }
 };
 
 exports.logoutUser = (req, res) => {
