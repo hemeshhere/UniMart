@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getAllCanteens, getCanteenMenu } = require('../controllers/canteenController');
-const requireAuth = require('../middlewares/requireAuth'); // JWT Bouncer
+const requireAuth = require('../middleware/requireAuth'); // JWT Bouncer
 
 // Strictly require authentication for all canteen routes
 router.use(requireAuth);

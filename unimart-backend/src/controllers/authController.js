@@ -3,8 +3,6 @@ const OTP = require('../models/OTP'); // FIX 1: Imported the OTP model!
 const sendEmail = require('../utils/sendEmail');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const mongoose = require('mongoose');
-
 
 const sendTokenResponse = (user, statusCode, res) => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -71,10 +69,7 @@ exports.verifyOTP = async (req, res, next) => {
     
     // 1. Data Normalization: Prevent typo-based rejections
     const stringOtp = otp.toString().trim();
-    const dbName = mongoose.connection.name;
-    const collectionName = OTP.collection.name;
-    const totalInCollection = await OTP.countDocuments();
-    
+  
     // 2. Look for them in the temporary OTP database
     // Using sort({ createdAt: -1 }) guarantees we check the NEWEST OTP if they requested multiple
     const pendingRegistration = await OTP.findOne({ email: email }).sort({ createdAt: -1 });
