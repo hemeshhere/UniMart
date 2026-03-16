@@ -60,7 +60,9 @@ exports.getActiveRunnerMission = async (req, res) => {
     const activeMission = await Order.findOne({ 
       runnerId: req.user._id, 
       status: { $in: ['ACCEPTED', 'PICKED_UP'] } 
-    }).populate('buyerId', 'name hostelBlock');
+    })
+    .select('-deliveryPIN -razorpayPaymentId')
+    .populate('buyerId', 'name hostelBlock');
 
     if (!activeMission) {
       return res.status(200).json({ success: true, hasActiveMission: false });
@@ -149,18 +151,18 @@ exports.verifyDelivery = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No linked bank account. Complete KYC first.' });
     }
 
-    // TRUE ESCROW RELEASE TO RUNNER'S BANK
-    try {
-      await razorpayInstance.transfers.create({
-        account: runner.razorpayAccountId,
-        amount: order.deliveryFee * 100, // Paise
-        currency: "INR",
-        notes: { order_id: order._id.toString(), mission: "Campus Food Delivery" }
-      });
-    } catch (transferError) {
-      console.error("Razorpay Transfer Failed:", transferError);
-      return res.status(502).json({ success: false, message: 'Bank transfer failed. Contact admin.' });
-    }
+    // TRUE ESCROW RELEASE TO RUNNER'S BANK (Commented out for local testing)
+    // try {
+    //   await razorpayInstance.transfers.create({
+    //     account: runner.razorpayAccountId,
+    //     amount: order.deliveryFee * 100, // Paise
+    //     currency: "INR",
+    //     notes: { order_id: order._id.toString(), mission: "Campus Food Delivery" }
+    //   });
+    // } catch (transferError) {
+    //   console.error("Razorpay Transfer Failed:", transferError);
+    //   return res.status(502).json({ success: false, message: 'Bank transfer failed. Contact admin.' });
+    // }
 
     order.status = 'COMPLETED';
     await order.save();
