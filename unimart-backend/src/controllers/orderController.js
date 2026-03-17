@@ -1,6 +1,5 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
-const razorpayInstance = require('../config/razorpay');
 
 // ==========================================
 // 1. DASHBOARD & DATA FETCHING ROUTES
@@ -26,7 +25,8 @@ exports.getCustomerDashboard = async (req, res) => {
 // @access  Private (Runner)
 exports.getRunnerDashboard = async (req, res) => {
   try {
-    const myRuns = await Order.find({ runnerId: req.user._id, status: 'COMPLETED' })
+    // FIX: Using 'DELIVERED' to match the Order schema enum
+    const myRuns = await Order.find({ runnerId: req.user._id, status: 'DELIVERED' })
       .sort({ createdAt: -1 })
       .populate('buyerId', 'name hostelBlock');
 
@@ -44,7 +44,9 @@ exports.getAvailableTasks = async (req, res) => {
     const availableTasks = await Order.find({ 
       status: 'PENDING',
       buyerId: { $ne: req.user._id } // Runners cannot see their own food orders
-    }).sort({ createdAt: 1 });
+    })
+    .select('-deliveryPIN')
+    .sort({ createdAt: 1 });
 
     res.status(200).json({ success: true, count: availableTasks.length, data: availableTasks });
   } catch (error) {
@@ -61,7 +63,7 @@ exports.getActiveRunnerMission = async (req, res) => {
       runnerId: req.user._id, 
       status: { $in: ['ACCEPTED', 'PICKED_UP'] } 
     })
-    .select('-deliveryPIN -razorpayPaymentId')
+    .select('-deliveryPIN')
     .populate('buyerId', 'name hostelBlock');
 
     if (!activeMission) {
@@ -78,25 +80,27 @@ exports.getActiveRunnerMission = async (req, res) => {
 // 2. MISSION ACTION ROUTES (THE ENGINE)
 // ==========================================
 
-// @desc    Create a new errand after Razorpay payment
+// @desc    Create a new errand 
 // @route   POST /api/orders
 // @access  Private (Buyer)
 exports.createOrder = async (req, res) => {
   try {
-    const { itemDetails, deliveryFee, pickupCoordinates, dropoffCoordinates, razorpayPaymentId } = req.body;
+    const { itemDetails, pricing, pickupCoordinates, dropoffCoordinates } = req.body;
 
-    if (!razorpayPaymentId) {
-      return res.status(400).json({ success: false, message: 'Payment ID is required to secure the escrow.' });
-    }
+    // Calculate total on backend to prevent frontend tampering
+    const totalToPayAtDoor = pricing.canteenItemTotal + pricing.deliveryFee;
 
     const generatedPIN = Math.floor(1000 + Math.random() * 9000).toString();
 
     const newOrder = await Order.create({
       buyerId: req.user._id,
       itemDetails,
-      deliveryFee,
+      pricing: {
+        canteenItemTotal: pricing.canteenItemTotal,
+        deliveryFee: pricing.deliveryFee,
+        totalToPayAtDoor: totalToPayAtDoor
+      },
       deliveryPIN: generatedPIN,
-      razorpayPaymentId, // Locked in for potential refunds
       pickupLocation: { type: 'Point', coordinates: pickupCoordinates },
       dropoffLocation: { type: 'Point', coordinates: dropoffCoordinates }
     });
@@ -107,7 +111,49 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// @desc    Accept an open errand (The Race Condition Fix)
+// @desc    Buyer cancels their own order
+// @route   POST /api/orders/:id/cancel
+// @access  Private (Buyer)
+exports.cancelOrderAsBuyer = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const buyerId = req.user._id;
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (order.buyerId.toString() !== buyerId.toString()) return res.status(403).json({ success: false, message: 'Unauthorized' });
+
+    // STRICT BLOCK: Runner already paid out-of-pocket at the canteen!
+    if (order.status === 'PICKED_UP' || order.status === 'DELIVERED') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Too late to cancel! The Runner has already paid for your food at the canteen. You must pay them at the door.' 
+      });
+    }
+
+    if (order.status === 'CANCELLED') {
+      return res.status(400).json({ success: false, message: 'Order is already cancelled.' });
+    }
+
+    // IF A RUNNER WAS ALREADY ASSIGNED, REFUND THEIR UNICOINS
+    if (order.status === 'ACCEPTED' && order.runnerId) {
+      const runner = await User.findById(order.runnerId);
+      if (runner) {
+        runner.uniCoins += 5; // Give back the platform tax
+        await runner.save();
+      }
+    }
+
+    order.status = 'CANCELLED';
+    await order.save();
+
+    res.status(200).json({ success: true, message: 'Order cancelled successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Accept an open errand (The UniCoin Bouncer & Atomic Lock)
 // @route   PUT /api/orders/:id/accept
 // @access  Private (Runner)
 exports.acceptOrder = async (req, res) => {
@@ -115,24 +161,84 @@ exports.acceptOrder = async (req, res) => {
     const orderId = req.params.id;
     const runnerId = req.user._id;
 
-    // THE ATOMIC UPDATE
+    // 1. THE BOUNCER: Atomically check >10 and deduct 5
+    const updatedRunner = await User.findOneAndUpdate(
+      { _id: runnerId, uniCoins: { $gt: 10 } },  //tweak this for MAB
+      { $inc: { uniCoins: -5 } },               
+      { new: true }
+    );
+
+    if (!updatedRunner) {
+      return res.status(403).json({ success: false, message: 'Insufficient UniCoins. Top up required.' });
+    }
+
+    // 2. THE ATOMIC UPDATE: Try to grab the order
     const securedOrder = await Order.findOneAndUpdate(
       { _id: orderId, status: 'PENDING' }, 
       { status: 'ACCEPTED', runnerId: runnerId },
       { new: true } 
     ).populate('buyerId', 'name hostelBlock');
 
+    // 3. THE ROLLBACK 
     if (!securedOrder) {
+      // They lost the race! Give them their 5 coins back immediately.
+      await User.updateOne(
+        { _id: runnerId }, 
+        { $inc: { uniCoins: 5 } }
+      );
+      
       return res.status(409).json({ success: false, message: 'Too late! Another runner grabbed this errand.' });
     }
-
-    res.status(200).json({ success: true, message: 'Mission accepted!', data: securedOrder });
+    const safeOrder = securedOrder.toObject();
+    delete safeOrder.deliveryPIN;
+    res.status(200).json({ success: true, message: 'Mission accepted! 5 UniCoins deducted.', data: safeOrder });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Verify PIN & Execute True Escrow Payout
+// @desc    Runner marks the food as picked up from the canteen
+// @route   PUT /api/orders/:id/pickup
+// @access  Private (Runner)
+exports.markAsPickedUp = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const runnerId = req.user._id;
+
+    const order = await Order.findById(orderId);
+    
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    
+    if (order.runnerId.toString() !== runnerId.toString()) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. You are not assigned to this mission.' });
+    }
+    
+    // Strict block: Order must be accepted first
+    if (order.status !== 'ACCEPTED') {
+      return res.status(400).json({ success: false, message: 'Order must be in ACCEPTED state to mark as picked up.' });
+    }
+
+    // Advance the state
+    order.status = 'PICKED_UP';
+    await order.save();
+
+    const safeOrder = order.toObject();
+    delete safeOrder.deliveryPIN;
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Food picked up! Head to the drop-off location.', 
+      data: safeOrder 
+    });
+    
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Verify PIN & Complete Order
 // @route   POST /api/orders/:id/verify
 // @access  Private (Runner)
 exports.verifyDelivery = async (req, res) => {
@@ -144,70 +250,64 @@ exports.verifyDelivery = async (req, res) => {
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
     if (order.runnerId.toString() !== runnerId.toString()) return res.status(403).json({ success: false, message: 'Unauthorized' });
+    
+    // FIX: Verify should work if the order is PICKED_UP (or ACCEPTED, if they forgot to click pickup)
+    if (order.status !== 'PICKED_UP' && order.status !== 'ACCEPTED') {
+      return res.status(400).json({ success: false, message: 'Order is not in a verifiable state.' });
+    }
+    
+    // Check the PIN
     if (order.deliveryPIN !== enteredPIN) return res.status(400).json({ success: false, message: 'Incorrect PIN.' });
 
-    const runner = await User.findById(runnerId);
-    if (!runner.razorpayAccountId) {
-      return res.status(400).json({ success: false, message: 'No linked bank account. Complete KYC first.' });
-    }
-
-    // TRUE ESCROW RELEASE TO RUNNER'S BANK (Commented out for local testing)
-    // try {
-    //   await razorpayInstance.transfers.create({
-    //     account: runner.razorpayAccountId,
-    //     amount: order.deliveryFee * 100, // Paise
-    //     currency: "INR",
-    //     notes: { order_id: order._id.toString(), mission: "Campus Food Delivery" }
-    //   });
-    // } catch (transferError) {
-    //   console.error("Razorpay Transfer Failed:", transferError);
-    //   return res.status(502).json({ success: false, message: 'Bank transfer failed. Contact admin.' });
-    // }
-
-    order.status = 'COMPLETED';
+    // FIX: Set to 'DELIVERED' to match the schema
+    order.status = 'DELIVERED';
     await order.save();
 
+    // Increment runner's stats
+    const runner = await User.findById(runnerId);
     runner.totalRuns += 1;
     await runner.save();
 
-    res.status(200).json({ success: true, message: 'Delivery verified! Funds routed to your bank account.' });
+    res.status(200).json({ success: true, message: 'Delivery verified! You can accept new missions.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Abort Mission & Execute True Escrow Refund
+// @desc    Runner aborts the mission
 // @route   POST /api/orders/:id/abort
 // @access  Private (Runner)
 exports.abortOrder = async (req, res) => {
   try {
     const orderId = req.params.id;
     const runnerId = req.user._id;
-    const { reason } = req.body; 
 
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
     if (order.runnerId.toString() !== runnerId.toString()) return res.status(403).json({ success: false, message: 'Unauthorized' });
-    if (order.status !== 'ACCEPTED') return res.status(400).json({ success: false, message: 'Cannot abort.' });
-
-    if (!order.razorpayPaymentId) {
-      return res.status(500).json({ success: false, message: 'No Payment ID found. Manual intervention required.' });
-    }
-
-    // TRUE ESCROW REVERSAL (REFUND BUYER)
-    try {
-      await razorpayInstance.payments.refund(order.razorpayPaymentId, {
-        notes: { reason: reason || "Runner aborted", order_id: order._id.toString() }
+    
+    // STRICT BLOCK: If they already bought the food, they cannot back out.
+    if (order.status === 'PICKED_UP' || order.status === 'DELIVERED') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cannot abort. You have already picked up the food. You must complete the delivery to get paid.' 
       });
-    } catch (refundError) {
-      console.error("Razorpay Refund Failed:", refundError);
-      return res.status(502).json({ success: false, message: 'Gateway failed to issue refund. Order frozen.' });
     }
 
+    if (order.status !== 'ACCEPTED') {
+      return res.status(400).json({ success: false, message: 'Order is not in a valid state to abort.' });
+    }
+
+    // Cancel the order and unassign the runner
     order.status = 'CANCELLED';
     await order.save();
 
-    res.status(200).json({ success: true, message: 'Mission aborted. Buyer has been fully refunded.' });
+    // REFUND THE TAX: Give the runner back their 5 UniCoins
+    const runner = await User.findById(runnerId);
+    runner.uniCoins += 5;
+    await runner.save();
+
+    res.status(200).json({ success: true, message: 'Mission aborted. 5 UniCoins have been refunded to your wallet.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

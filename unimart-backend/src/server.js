@@ -20,21 +20,12 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
-
-// Razorpay Webhook Fix (must be before express.json)
-app.use(
-  '/api/payments/webhook',
-  express.raw({ type: 'application/json' }),
-  require('./routes/paymentRoutes')
-);
-
-// Normal JSON parser
 app.use(express.json());
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
-app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/wallet', require('./routes/walletRoutes'));
 app.use('/api/canteens', require('./routes/canteenRoutes'));
 
 // Error Handler
@@ -43,7 +34,7 @@ app.use(errorHandler);
 // Create HTTP server
 const server = http.createServer(app);
 
-// Socket.io
+// Socket.io Setup
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -51,10 +42,12 @@ const io = new Server(server, {
   }
 });
 
-// Socket Manager
+app.set('io', io);
+
+// Initialize Socket Manager
 require('./sockets/socketManager')(io);
 
-// Health check (for Render / cron-job)
+// Health check 
 app.get('/ping', (req, res) => {
   res.status(200).send('Server is awake');
 });

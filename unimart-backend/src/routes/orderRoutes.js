@@ -5,6 +5,8 @@ const {
   acceptOrder, 
   verifyDelivery,
   abortOrder,
+  cancelOrderAsBuyer, 
+  markAsPickedUp,    
   getCustomerDashboard,
   getRunnerDashboard,
   getAvailableTasks,
@@ -16,39 +18,47 @@ const requireAuth = require('../middleware/requireAuth'); // The bouncer
 router.use(requireAuth);
 
 // ==========================================
-// 1. DASHBOARD DATA ROUTES (Must be at the top)
+// 1. DASHBOARD DATA ROUTES
 // ==========================================
 
-// GET http://localhost:5000/api/orders/customer
+// @route   GET /api/orders/customer
 router.get('/customer', getCustomerDashboard);
 
-// GET http://localhost:5000/api/orders/runner
+// @route   GET /api/orders/runner
 router.get('/runner', getRunnerDashboard);
 
-// GET http://localhost:5000/api/orders/available
+// @route   GET /api/orders/available
 router.get('/available', getAvailableTasks);
 
-// GET http://localhost:5000/api/orders/runner/active
+// @route   GET /api/orders/runner/active
 router.get('/runner/active', getActiveRunnerMission);
 
 // ==========================================
-// 2. ACTION ROUTES (Dynamic IDs must go at the bottom)
+// 2. ACTION ROUTES 
 // ==========================================
 
-// Create a new errand
-// POST http://localhost:5000/api/orders
+// @desc    Create a new errand (Zero Gateway)
+// @route   POST /api/orders
 router.post('/', createOrder);
 
-// Runner accepts an errand
-// PUT http://localhost:5000/api/orders/:id/accept
+// @desc    Buyer cancels their own order (Refunds Runner if accepted)
+// @route   POST /api/orders/:id/cancel
+router.post('/:id/cancel', cancelOrderAsBuyer);
+
+// @desc    Runner accepts an errand (Deducts 5 UniCoins)
+// @route   PUT /api/orders/:id/accept
 router.put('/:id/accept', acceptOrder);
 
-// Runner verifies the PIN at drop-off (Triggers Escrow Payout)
-// POST http://localhost:5000/api/orders/:id/verify
+// @desc    Runner marks the food as picked up from the canteen
+// @route   PUT /api/orders/:id/pickup
+router.put('/:id/pickup', markAsPickedUp);
+
+// @desc    Runner verifies the PIN at drop-off (Completes Order)
+// @route   POST /api/orders/:id/verify
 router.post('/:id/verify', verifyDelivery);
 
-// Runner aborts the mission (Triggers Escrow Refund)
-// POST http://localhost:5000/api/orders/:id/abort
+// @desc    Runner aborts the mission (Refunds 5 UniCoins)
+// @route   POST /api/orders/:id/abort
 router.post('/:id/abort', abortOrder);
 
 module.exports = router;

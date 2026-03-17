@@ -12,32 +12,27 @@ const orderSchema = new mongoose.Schema({
     ref: 'User',
     default: null // Null until a runner wins the atomic race condition
   },
-  
 
-  // --- THE MISSION ---
+  // --- THE MISSION(to be displayed on runner dashboard) ---
   itemDetails: {
     canteenName: { type: String, required: true },
-    items: [{ name: String, qty: Number, price: Number }],
-    totalItemCost: { type: Number, required: true }
+    items: [{ name: String, qty: Number, price: Number }]
   },
-  deliveryFee: {
-    type: Number,
-    required: true // The runner's cut
+
+  // --- THE ECONOMICS (Cleaned up) ---
+  pricing: {
+    canteenItemTotal: { type: Number, required: true }, // Cost of food
+    deliveryFee: { type: Number, required: true },      // Runner's cut
+    totalToPayAtDoor: { type: Number, required: true }  // Item Total + Delivery Fee
   },
   status: {
     type: String,
-    enum: ['PENDING', 'ACCEPTED', 'COMPLETED', 'DISPUTED', 'CANCELLED'],
+    enum: ['PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERED', 'CANCELLED'],
     default: 'PENDING'
   },
   deliveryPIN: {
     type: String,
     required: true // The randomly generated 4-digit code
-  },
-
-  // --- THE FINTECH ESCROW ---
-  razorpayPaymentId: {
-    type: String,
-    default: null // The Razorpay transaction ID (Mandatory for automated refunds)
   },
 
   // --- THE GEOSPATIAL MAP DATA ---

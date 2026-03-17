@@ -27,10 +27,19 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  // --- FINTECH FIELDS ---
-  razorpayAccountId: {
-    type: String,
-    default: null // Populated when the student completes Runner Onboarding (KYC)
+  successfulPayments: [{ type: String }],
+  uniCoins: {
+    type: Number,
+    default: 0, 
+    min: 0 // Prevents the wallet from going negative
+  },
+  strikeCount: {
+    type: Number,
+    default: 0 // 3 strikes (ghosting) = permanent LPU email ban
+  },
+  isBanned: {
+    type: Boolean,
+    default: false
   },
 }, { timestamps: true });
 
