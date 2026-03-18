@@ -102,20 +102,25 @@ const AuthPage = () => {
     <div className="flex flex-col md:flex-row min-h-screen w-full bg-white overflow-hidden">
       {/* --- HERO SECTION (Left) --- */}
       <div className="flex-none md:flex-[1.2] relative pt-10 px-5 pb-5 md:py-[60px] md:px-[80px] flex flex-col justify-center text-center md:text-left bg-[#fafbfc] overflow-hidden">
-        <div className="animate-fade-in relative z-10">
-          <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full font-semibold text-sm text-primary-orange shadow-sm mb-5 md:mb-[30px] mx-auto md:mx-0">
-            <span className="w-2 h-2 bg-primary-orange rounded-full"></span>UniMart Delivery
+        <div className="animate-fade-in relative z-10 w-full h-full flex flex-col justify-center">
+          {/* Text Content Wrapper */}
+          <div className="relative z-20 flex flex-col items-center md:items-start md:max-w-[450px] lg:max-w-[550px] xl:-translate-x-8">
+            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full font-semibold text-sm text-primary-orange shadow-sm mb-5 md:mb-[30px]">
+              <span className="w-2 h-2 bg-primary-orange rounded-full"></span>UniMart Delivery
+            </div>
+            <h1 className="text-[3.5rem] md:text-[3.5rem] lg:text-[4.5rem] leading-[1.1] font-extrabold text-text-dark mb-6 text-center md:text-left">
+              Fastest <br /><span className="text-primary-orange">Delivery</span> & <br />Easy <span className="text-primary-orange">Pickup.</span>
+            </h1>
+            <p className="text-[1.1rem] text-text-gray max-w-[400px] leading-[1.6] mb-[30px] md:mb-10 text-center md:text-left">
+              UniMart assures fresh grocery every morning to your hostel without getting out.
+            </p>
           </div>
-          <h1 className="text-[3.5rem] md:text-[3.5rem] lg:text-[4.5rem] leading-[1.1] font-extrabold text-text-dark mb-6 z-10 relative">
-            Fastest <br /><span className="text-primary-orange">Delivery</span> & <br />Easy <span className="text-primary-orange">Pickup.</span>
-          </h1>
-          <p className="text-[1.1rem] text-text-gray max-w-[400px] leading-[1.6] mb-[30px] md:mb-10 z-10 relative mx-auto md:mx-0">
-            UniMart assures fresh grocery every morning to your hostel without getting out.
-          </p>
-          <div className="relative right-0 top-0 w-full h-[300px] mt-[30px] opacity-100 md:absolute md:-right-[20%] md:top-[10%] md:w-[60%] md:h-[80%] md:opacity-30 lg:-right-[5%] lg:opacity-100 z-[1]">
+
+          {/* Floating Image Wrapper */}
+          <div className="relative md:absolute right-0 top-0 md:-right-[20%] md:top-[10%] lg:-right-[5%] lg:top-[10%] w-full h-[300px] md:w-[60%] md:h-[80%] mt-[30px] md:mt-0 opacity-100 md:opacity-30 lg:opacity-100 z-[1]">
              <div className="hidden md:block absolute -right-[100px] top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full z-[1] shadow-[inset_0_0_50px_rgba(248,144,37,0.05)] shadow-lg bg-gradient-to-br from-[#fff9f0] to-[#fff]"></div>
              <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full z-[2] shadow-md bg-gradient-to-br from-[#fff9f0] to-[#fff]"></div>
-             <img src="/delivery.png" alt="Delivery Scooter" className="relative right-auto top-auto h-full mx-auto block md:absolute md:right-[50px] md:top-[10%] md:w-auto md:h-[80%] md:object-contain z-[3] mix-blend-multiply animate-float" />
+             <img src="/delivery.png" alt="Delivery Scooter" className="relative right-auto top-auto md:absolute md:right-[50px] md:top-[10%] h-full w-auto block mx-auto md:h-[80%] md:object-contain z-[3] mix-blend-multiply animate-float" />
           </div>
         </div>
       </div>
