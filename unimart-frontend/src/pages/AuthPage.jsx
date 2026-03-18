@@ -118,7 +118,7 @@ const AuthPage = () => {
 
           {/* Floating Image Wrapper */}
           <div className="relative md:absolute right-0 top-0 md:-right-[20%] md:top-[10%] lg:-right-[5%] lg:top-[10%] w-full h-75 md:w-[60%] md:h-[80%] mt-7.5 md:mt-0 opacity-100 md:opacity-30 lg:opacity-100 z-1">
-             <div className="hidden md:block absolute -right-25 top-1/2 -translate-y-1/2 w-150 h-150 rounded-full z-1 shadow-[inset_0_0_50px_rgba(248,144,37,0.05)] shadow-lg bg-linear-to-br from-[#fff9f0] to-[#fff]"></div>
+             <div className="hidden md:block absolute -right-25 top-1/2 -translate-y-1/2 w-150 h-150 rounded-full z-1 bg-linear-to-br from-[#fff9f0] to-[#fff] shadow-[inset_0_0_50px_rgba(248,144,37,0.05)]"></div>
              <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-100 h-100 rounded-full z-2 shadow-md bg-linear-to-br from-[#fff9f0] to-[#fff]"></div>
              <img src="/delivery.png" alt="Delivery Scooter" className="relative right-auto top-auto md:absolute md:right-12.5 md:top-[10%] h-full w-auto block mx-auto md:h-[80%] md:object-contain z-3 mix-blend-multiply animate-float" />
           </div>
