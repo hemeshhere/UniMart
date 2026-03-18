@@ -34,8 +34,19 @@ const AuthPage = () => {
 
   const executeLogin = async () => {
     const res = await loginUser(formData.email, formData.password);
-    authenticate(res.user, res.token);
-    navigate('/dashboard'); // Clean SPA routing
+    
+    // 1. Grab the user data exactly where your console log says it is
+    const userData = res.data?.user || res.data; 
+    
+    // 2. If backend uses HttpOnly cookies, res.token is undefined. Use a fallback flag.
+    const token = res.token || 'secure-cookie-active';
+
+    if (!userData) {
+      throw new Error("Invalid response from server. Missing user data.");
+    }
+
+    authenticate(userData, token);
+    navigate('/dashboard'); 
   };
 
   const executeRegister = async () => {
@@ -57,7 +68,15 @@ const AuthPage = () => {
 
   const executeOTPVerification = async () => {
     const res = await verifyOTP(formData.email, formData.otp);
-    authenticate(res.user, res.token);
+    
+    const userData = res.data?.user || res.data;
+    const token = res.token || 'secure-cookie-active';
+
+    if (!userData) {
+      throw new Error("Invalid response from server. Missing user data.");
+    }
+
+    authenticate(userData, token);
     navigate('/dashboard');
   };
 
