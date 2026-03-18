@@ -14,10 +14,24 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+const allowedOrigin = process.env.CLIENT_URL;
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (origin === allowedOrigin) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+};
+
+// Apply CORS
+app.use(cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.json());
@@ -37,8 +51,9 @@ const server = http.createServer(app);
 // Socket.io Setup
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: allowedOrigin,
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
