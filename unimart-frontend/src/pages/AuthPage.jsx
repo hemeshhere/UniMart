@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, MapPin } from 'lucide-react';
 import { loginUser, registerUser, verifyOTP } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
-import '../styles/Auth.css';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -81,31 +80,35 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="auth-container">
+    <div className="flex flex-col md:flex-row min-h-screen w-full bg-white overflow-hidden">
       {/* --- HERO SECTION (Left) --- */}
-      <div className="auth-hero">
-        <div className="hero-content animate-fade-in">
-          <div className="brand-badge"><span className="badge-dot"></span>UniMart Delivery</div>
-          <h1 className="hero-title">
-            Fastest <br /><span className="text-primary">Delivery</span> & <br />Easy <span className="text-primary">Pickup.</span>
+      <div className="flex-none md:flex-[1.2] relative pt-10 px-5 pb-5 md:py-[60px] md:px-[80px] flex flex-col justify-center text-center md:text-left bg-[#fafbfc] overflow-hidden">
+        <div className="animate-fade-in relative z-10">
+          <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full font-semibold text-sm text-primary-orange shadow-sm mb-5 md:mb-[30px] mx-auto md:mx-0">
+            <span className="w-2 h-2 bg-primary-orange rounded-full"></span>UniMart Delivery
+          </div>
+          <h1 className="text-[3.5rem] md:text-[3.5rem] lg:text-[4.5rem] leading-[1.1] font-extrabold text-text-dark mb-6 z-10 relative">
+            Fastest <br /><span className="text-primary-orange">Delivery</span> & <br />Easy <span className="text-primary-orange">Pickup.</span>
           </h1>
-          <p className="hero-subtitle">UniMart assures fresh grocery every morning to your hostel without getting out.</p>
-          <div className="floating-img-container">
-             <div className="aesthetic-circle"></div>
-             <div className="aesthetic-circle small"></div>
-             <img src="/delivery.png" alt="Delivery Scooter" className="delivery-hero-img animate-float" />
+          <p className="text-[1.1rem] text-text-gray max-w-[400px] leading-[1.6] mb-[30px] md:mb-10 z-10 relative mx-auto md:mx-0">
+            UniMart assures fresh grocery every morning to your hostel without getting out.
+          </p>
+          <div className="relative right-0 top-0 w-full h-[300px] mt-[30px] opacity-100 md:absolute md:-right-[20%] md:top-[10%] md:w-[60%] md:h-[80%] md:opacity-30 lg:-right-[5%] lg:opacity-100 z-[1]">
+             <div className="hidden md:block absolute -right-[100px] top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full z-[1] shadow-[inset_0_0_50px_rgba(248,144,37,0.05)] shadow-lg bg-gradient-to-br from-[#fff9f0] to-[#fff]"></div>
+             <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full z-[2] shadow-md bg-gradient-to-br from-[#fff9f0] to-[#fff]"></div>
+             <img src="/delivery.png" alt="Delivery Scooter" className="relative right-auto top-auto h-full mx-auto block md:absolute md:right-[50px] md:top-[10%] md:w-auto md:h-[80%] md:object-contain z-[3] mix-blend-multiply animate-float" />
           </div>
         </div>
       </div>
 
       {/* --- FORM SECTION (Right) --- */}
-      <div className="auth-form-section">
-        <div className="auth-card animate-slide-in">
-          <div className="auth-header">
-            <h2>
+      <div className="flex-[0.8] flex items-center justify-center p-5 md:p-10 bg-white border-t border-[rgba(0,0,0,0.05)] md:border-t-0 md:border-l">
+        <div className="w-full max-w-[440px] bg-white p-[30px] md:p-10 rounded-2xl shadow-[0_10px_25px_rgba(27,38,65,0.05)] md:shadow-[0_15px_35px_rgba(27,38,65,0.08)] animate-slide-in">
+          <div className="mb-[30px]">
+            <h2 className="text-[2rem] text-dark-blue mb-2 font-bold">
               {authMode === 'OTP' ? 'Verify OTP' : authMode === 'LOGIN' ? 'Welcome Back' : 'Create Account'}
             </h2>
-            <p className="text-gray-500 text-sm mt-2">
+            <p className="text-text-gray text-[0.95rem]">
               {authMode === 'OTP' ? 'Enter the 6-digit code sent to your email' : 'Securely access the UniMart campus network'}
             </p>
           </div>
@@ -174,10 +177,10 @@ const AuthPage = () => {
 
           {/* Footer Toggles */}
           {authMode !== 'OTP' && (
-            <div className="auth-footer mt-6 text-center text-sm">
+            <div className="mt-6 text-center text-[0.95rem] text-text-gray">
               <p className="text-gray-600">
                 {authMode === 'LOGIN' ? "Don't have an account? " : "Already have an account? "}
-                <button type="button" className="text-orange-600 font-bold hover:underline" onClick={toggleMode}>
+                <button type="button" className="bg-none border-none text-primary-orange font-inherit font-semibold text-[0.95rem] ml-2 cursor-pointer transition-all duration-300 hover:underline" onClick={toggleMode}>
                   {authMode === 'LOGIN' ? "Register Now" : "Login Here"}
                 </button>
               </p>
