@@ -101,34 +101,34 @@ const AuthPage = () => {
   return (
     <div className="flex flex-col md:flex-row min-h-screen w-full bg-white overflow-hidden">
       {/* --- HERO SECTION (Left) --- */}
-      <div className="flex-none md:flex-[1.2] relative pt-10 px-5 pb-5 md:py-[60px] md:px-[80px] flex flex-col justify-center text-center md:text-left bg-[#fafbfc] overflow-hidden">
+      <div className="flex-none md:flex-[1.2] relative pt-10 px-5 pb-5 md:py-15 md:px-20 flex flex-col justify-center text-center md:text-left bg-[#fafbfc] overflow-hidden">
         <div className="animate-fade-in relative z-10 w-full h-full flex flex-col justify-center">
           {/* Text Content Wrapper */}
-          <div className="relative z-20 flex flex-col items-center md:items-start md:max-w-[450px] lg:max-w-[550px] xl:-translate-x-8">
-            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full font-semibold text-sm text-primary-orange shadow-sm mb-5 md:mb-[30px]">
+          <div className="relative z-20 flex flex-col items-center md:items-start md:max-w-112.5 lg:max-w-137.5 xl:-translate-x-8">
+            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full font-semibold text-sm text-primary-orange shadow-sm mb-5 md:mb-7.5">
               <span className="w-2 h-2 bg-primary-orange rounded-full"></span>UniMart Delivery
             </div>
             <h1 className="text-[3.5rem] md:text-[3.5rem] lg:text-[4.5rem] leading-[1.1] font-extrabold text-text-dark mb-6 text-center md:text-left">
               Fastest <br /><span className="text-primary-orange">Delivery</span> & <br />Easy <span className="text-primary-orange">Pickup.</span>
             </h1>
-            <p className="text-[1.1rem] text-text-gray max-w-[400px] leading-[1.6] mb-[30px] md:mb-10 text-center md:text-left">
+            <p className="text-[1.1rem] text-text-gray max-w-100 leading-[1.6] mb-7.5 md:mb-10 text-center md:text-left">
               UniMart assures fresh grocery every morning to your hostel without getting out.
             </p>
           </div>
 
           {/* Floating Image Wrapper */}
-          <div className="relative md:absolute right-0 top-0 md:-right-[20%] md:top-[10%] lg:-right-[5%] lg:top-[10%] w-full h-[300px] md:w-[60%] md:h-[80%] mt-[30px] md:mt-0 opacity-100 md:opacity-30 lg:opacity-100 z-[1]">
-             <div className="hidden md:block absolute -right-[100px] top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full z-[1] shadow-[inset_0_0_50px_rgba(248,144,37,0.05)] shadow-lg bg-gradient-to-br from-[#fff9f0] to-[#fff]"></div>
-             <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full z-[2] shadow-md bg-gradient-to-br from-[#fff9f0] to-[#fff]"></div>
-             <img src="/delivery.png" alt="Delivery Scooter" className="relative right-auto top-auto md:absolute md:right-[50px] md:top-[10%] h-full w-auto block mx-auto md:h-[80%] md:object-contain z-[3] mix-blend-multiply animate-float" />
+          <div className="relative md:absolute right-0 top-0 md:-right-[20%] md:top-[10%] lg:-right-[5%] lg:top-[10%] w-full h-75 md:w-[60%] md:h-[80%] mt-7.5 md:mt-0 opacity-100 md:opacity-30 lg:opacity-100 z-1">
+             <div className="hidden md:block absolute -right-25 top-1/2 -translate-y-1/2 w-150 h-150 rounded-full z-1 shadow-[inset_0_0_50px_rgba(248,144,37,0.05)] shadow-lg bg-linear-to-br from-[#fff9f0] to-[#fff]"></div>
+             <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-100 h-100 rounded-full z-2 shadow-md bg-linear-to-br from-[#fff9f0] to-[#fff]"></div>
+             <img src="/delivery.png" alt="Delivery Scooter" className="relative right-auto top-auto md:absolute md:right-12.5 md:top-[10%] h-full w-auto block mx-auto md:h-[80%] md:object-contain z-3 mix-blend-multiply animate-float" />
           </div>
         </div>
       </div>
 
       {/* --- FORM SECTION (Right) --- */}
       <div className="flex-[0.8] flex items-center justify-center p-5 md:p-10 bg-white border-t border-[rgba(0,0,0,0.05)] md:border-t-0 md:border-l">
-        <div className="w-full max-w-[440px] bg-white p-[30px] md:p-10 rounded-2xl shadow-[0_10px_25px_rgba(27,38,65,0.05)] md:shadow-[0_15px_35px_rgba(27,38,65,0.08)] animate-slide-in">
-          <div className="mb-[30px]">
+        <div className="w-full max-w-110 bg-white p-7.5 md:p-10 rounded-2xl shadow-[0_10px_25px_rgba(27,38,65,0.05)] md:shadow-[0_15px_35px_rgba(27,38,65,0.08)] animate-slide-in">
+          <div className="mb-7.5">
             <h2 className="text-[2rem] text-dark-blue mb-2 font-bold">
               {authMode === 'OTP' ? 'Verify OTP' : authMode === 'LOGIN' ? 'Welcome Back' : 'Create Account'}
             </h2>

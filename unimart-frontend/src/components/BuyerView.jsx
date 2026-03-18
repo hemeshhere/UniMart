@@ -132,7 +132,7 @@ const BuyerView = () => {
         {/*THE NEW CUSTOM CANCEL OVERLAY MODAL */}
         {showCancelModal &&
         createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+                <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
                 
                 {/* Modal Card */}
                 <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-100 p-6 animate-fade-in">
@@ -226,7 +226,7 @@ const BuyerView = () => {
         </div>
 
         {/* The Security PIN Card */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+        <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
           <ShieldCheck className="absolute -right-6 -top-6 text-gray-700 opacity-30" size={120} />
           <h3 className="text-lg font-medium text-gray-300 mb-1 relative z-10">Delivery Security PIN</h3>
           <p className="text-sm text-gray-400 mb-4 relative z-10">Only share this code with the Runner when they hand you the food.</p>

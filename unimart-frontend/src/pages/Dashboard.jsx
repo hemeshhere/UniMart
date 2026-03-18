@@ -144,7 +144,7 @@ const Dashboard = () => {
     {/* 🛑 MODALS & TOASTS (Always top level) 🛑 */}
     {showWalletModal && (
       /* Using z-[9999] and w-screen/h-screen as discussed for total lockdown */
-      <div className="fixed inset-0 w-screen h-screen bg-black/70 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 w-screen h-screen bg-black/70 backdrop-blur-md z-9999 flex items-center justify-center p-4">
         <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
            {/* Modal content remains same as previous step */}
            <div className="flex justify-between items-center mb-6">
