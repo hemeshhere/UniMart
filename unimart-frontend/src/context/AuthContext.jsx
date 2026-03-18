@@ -6,9 +6,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const storedUser = localStorage.getItem('user');
-      return storedUser && storedUser !== 'undefined'
-        ? JSON.parse(storedUser)
-        : null;
+      return storedUser && storedUser !== 'undefined' ? JSON.parse(storedUser) : null;
     } catch (error) {
       return null;
     }
@@ -22,6 +20,13 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
+  // 🛡️ NEW: Function to silently update specific user data (like UniCoins)
+  const updateUser = (updatedFields) => {
+    const updatedUser = { ...user, ...updatedFields };
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -30,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, authenticate, logout }}>
+    <AuthContext.Provider value={{ user, token, authenticate, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

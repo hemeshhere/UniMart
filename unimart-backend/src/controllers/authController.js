@@ -128,3 +128,19 @@ exports.logoutUser = (req, res) => {
   res.cookie('token', 'none', { expires: new Date(Date.now() + 10 * 1000), httpOnly: true });
   res.status(200).json({ success: true, message: 'Logged out' });
 };
+
+// @desc    Get current logged-in user profile (Wallet Sync)
+// @route   GET /api/auth/me
+// @access  Private
+exports.getMe = async (req, res) => {
+  try {
+    // req.user is already securely populated by your requireAuth middleware!
+    res.status(200).json({
+      success: true,
+      data: req.user 
+    });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

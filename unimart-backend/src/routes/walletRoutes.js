@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const { createTopUpIntent, verifyTopUpPayment } = require('../controllers/walletController');
-const auth = require('../middleware/requireAuth'); // default export
+const requireAuth = require('../middleware/requireAuth');
 
-router.post('/topup', auth, createTopUpIntent);
-router.post('/verify', auth, verifyTopUpPayment);
+router.post('/topup', requireAuth, createTopUpIntent);
+router.post('/verify', requireAuth, verifyTopUpPayment);
 
 module.exports = router;

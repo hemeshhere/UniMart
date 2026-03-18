@@ -22,7 +22,7 @@ exports.createTopUpIntent = async (req, res) => {
     const options = {
       amount: amountInINR * 100, // Razorpay requires paise (₹50 = 5000 paise)
       currency: "INR",
-      receipt: `topup_${req.user._id}_${Date.now()}`,
+      receipt: `${req.user._id.toString().slice(-10)}_${Date.now()}`,
     };
 
     const order = await razorpayInstance.orders.create(options);
@@ -60,18 +60,28 @@ exports.verifyTopUpPayment = async (req, res) => {
 
     // 3. Fetch the absolute truth from Razorpay
     const paymentDocument = await razorpayInstance.payments.fetch(razorpay_payment_id);
+    if (paymentDocument.status !== 'captured') {
+      return res.status(400).json({ success: false, message: 'Payment not captured. Status: ' + paymentDocument.status });
+    }
     const trueAmountPaid = paymentDocument.amount / 100; // Divide paise by 100
-
-    // 4. Give them the coins based on TRUE amount and LOCK the receipt
-    const runner = await User.findById(runnerId);
-    runner.uniCoins += trueAmountPaid;
-    runner.successfulPayments.push(razorpay_payment_id); // Marks receipt as used
-    await runner.save();
-
+    const updatedUser = await User.findOneAndUpdate(
+      { 
+        _id: runnerId, 
+        successfulPayments: { $ne: razorpay_payment_id } // $ne means "Not Equal" / "Not in array"
+      },
+      { 
+        $inc: { uniCoins: trueAmountPaid },
+        $push: { successfulPayments: razorpay_payment_id } 
+      },
+      { new: true } // Return the updated document
+    );
+    if (!updatedUser) {
+      return res.status(400).json({ success: false, message: 'This payment has already been processed or user not found.' });
+    }
     res.status(200).json({ 
       success: true, 
       message: `Payment successful! ${trueAmountPaid} UniCoins added to your wallet.`,
-      uniCoins: runner.uniCoins 
+      uniCoins: updatedUser.uniCoins 
     });
 
   } catch (error) {

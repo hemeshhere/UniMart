@@ -49,4 +49,47 @@ export const verifyOTP = async (email, otp) => {
   return response.data;
 };
 
+export const getUserProfile = async () => {
+  const response = await api.get('/auth/me'); 
+  return response.data;
+};
+// --- Canteen & Order Endpoints ---
+
+export const getCanteens = async () => {
+  const response = await api.get('/canteens');
+  return response.data;
+};
+
+// Create a new order (Sends to the Live Radar)
+export const createOrder = async (orderData) => {
+  const response = await api.post('/orders', orderData);
+  return response.data;
+};
+// Fetch a specific canteen (which includes the heavy menu data)
+export const getCanteenById = async (canteenId) => {
+  const response = await api.get(`/canteens/${canteenId}`);
+  return response.data;
+};
+// Check if the logged-in customer has an active order
+export const getActiveCustomerOrder = async () => {
+  const response = await api.get('/orders/customer');
+  return response.data;
+};
+// Cancel an active order
+export const cancelOrder = async (orderId) => {
+  const response = await api.post(`/orders/${orderId}/cancel`);
+  return response.data;
+};
+
+// --- Wallet Endpoints ---
+export const topUpWallet = async (amount) => {
+  const response = await api.post('/wallet/topup', { amountInINR: amount });
+  return response.data;
+};
+
+// 2. Send the Razorpay success signature to the backend vault for verification
+export const verifyRazorpayPayment = async (paymentData) => {
+  const response = await api.post('/wallet/verify-payment', paymentData);
+  return response.data;
+};
 export default api;
