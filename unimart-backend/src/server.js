@@ -14,15 +14,19 @@ const app = express();
 connectDB();
 
 // Middleware
-const allowedOrigin = process.env.CLIENT_URL;
+const allowedOrigins = [
+  process.env.CLIENT_URL,    
+  'http://localhost:5173',   
+  'http://localhost:3000'    
+];
 
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-
-    if (origin === allowedOrigin) {
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
+      console.warn(`Blocked by CORS: ${origin}`); 
       return callback(new Error('Not allowed by CORS'));
     }
   },
@@ -51,7 +55,7 @@ const server = http.createServer(app);
 // Socket.io Setup
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigin,
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true
   }

@@ -6,15 +6,21 @@ const bcrypt = require('bcryptjs');
 
 const sendTokenResponse = (user, statusCode, res) => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  const isProd = process.env.NODE_ENV === 'production';
   const options = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    secure: isProd, 
+    sameSite: isProd ? 'none' : 'strict' 
   };
   res.status(statusCode).cookie('token', token, options).json({
     success: true,
-    data: { _id: user._id, name: user.name, email: user.email, walletBalance: user.walletBalance }
+    data: { 
+      _id: user._id, 
+      name: user.name, 
+      email: user.email, 
+      walletBalance: user.walletBalance 
+    }
   });
 };
 
