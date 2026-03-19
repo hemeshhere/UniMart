@@ -49,10 +49,6 @@ exports.registerUser = async (req, res, next) => {
 
     // 6. Send the email (Uncomment when nodemailer is ready)
      await sendEmail({ email, subject: 'UniMart Verification', message: `Your OTP is: ${generatedOtp}` });
-    
-    // For Thunder Client testing before email is set up, print it to terminal:
-    console.log(`\n=== OTP for ${email} is: ${generatedOtp} ===\n`);
-
     res.status(200).json({ success: true, message: 'OTP sent to email. Please verify to complete registration.' });
   } catch (error) { 
     next(error); 
