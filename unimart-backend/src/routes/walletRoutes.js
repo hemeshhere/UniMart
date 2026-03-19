@@ -5,6 +5,6 @@ const { createTopUpIntent, verifyTopUpPayment } = require('../controllers/wallet
 const requireAuth = require('../middleware/requireAuth');
 
 router.post('/topup', requireAuth, createTopUpIntent);
-router.post('/verify', requireAuth, verifyTopUpPayment);
+router.post('/verify-payment', requireAuth, verifyTopUpPayment);
 
 module.exports = router;
