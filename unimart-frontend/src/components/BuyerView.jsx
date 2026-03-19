@@ -181,49 +181,143 @@ const BuyerView = () => {
             )
         }
 
-        {/* Header Status Bar */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Active Mission</h2>
-              <p className="text-gray-500">From {activeOrder.itemDetails?.canteenName}</p>
-            </div>
-            <div className="bg-orange-50 text-orange-600 px-4 py-2 rounded-lg font-bold shadow-inner">
-              ₹{activeOrder.pricing?.canteenItemTotal + activeOrder.pricing?.deliveryFee} to pay
-            </div>
-          </div>
+        {/* ── Animated Status Hero Card ── */}
+        {(() => {
+          const s = activeOrder.status;
+          const stepIndex = { PENDING: 0, ACCEPTED: 1, PICKED_UP: 2, DELIVERED: 3 }[s] ?? 0;
 
-          {/* Dynamic Status Timeline */}
-          <div className="relative pt-4 pb-2">
-            <div className="absolute top-8 left-10 right-10 h-1 bg-gray-100 rounded"></div>
-            <div className={`absolute top-8 left-10 h-1 rounded transition-all duration-500 ${
-              activeOrder.status === 'PENDING' ? 'w-0' : 
-              activeOrder.status === 'ACCEPTED' ? 'w-1/2 bg-blue-500' : 
-              activeOrder.status === 'PICKED_UP' ? 'w-full bg-green-500' : 'w-0'
-            }`}></div>
-            
-            <div className="relative flex justify-between">
-              <div className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-lg z-10">
-                  <Clock size={20} />
+          const steps = [
+            { label: 'Pending',    emoji: '🕐' },
+            { label: 'Accepted',   emoji: '👤' },
+            { label: 'On the Way', emoji: '🛵' },
+            { label: 'Delivered',  emoji: '🎉' },
+          ];
+
+          const heroBg = {
+            PENDING:   'from-amber-500 to-orange-500',
+            ACCEPTED:  'from-blue-500 to-indigo-600',
+            PICKED_UP: 'from-emerald-500 to-teal-600',
+            DELIVERED: 'from-purple-500 to-pink-500',
+          }[s] || 'from-gray-700 to-gray-900';
+
+          const heroMsg = {
+            PENDING:   { title: 'Looking for a Runner…',  sub: 'Your order is live on the radar.' },
+            ACCEPTED:  { title: 'Runner is on the way!',  sub: "They're heading to the canteen now." },
+            PICKED_UP: { title: 'Food is en route! 🚀',   sub: 'Your runner is heading to you.' },
+            DELIVERED: { title: 'Enjoy your meal! 🎉',    sub: "Hope it's delicious!" },
+          }[s] || { title: 'Processing…', sub: '' };
+
+          return (
+            <div className={`rounded-3xl overflow-hidden shadow-2xl bg-linear-to-br ${heroBg}`}>
+
+              {/* Illustration area */}
+              <div className="relative h-44 flex items-center justify-center overflow-hidden">
+
+                {/* Scrolling road dashes — only when PICKED_UP */}
+                {s === 'PICKED_UP' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-8 overflow-hidden opacity-30">
+                    <div
+                      className="h-full flex items-center gap-8 whitespace-nowrap"
+                      style={{ animation: 'roadScroll 1.2s linear infinite', width: '200%' }}
+                    >
+                      {[...Array(20)].map((_, i) => (
+                        <div key={i} className="w-16 h-2 bg-white rounded-full shrink-0" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bokeh blobs */}
+                <div className="absolute top-4 left-6 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                <div className="absolute bottom-4 right-6 w-28 h-28 bg-black/10 rounded-full blur-2xl" />
+
+                {/* Main delivery character */}
+                <div
+                  className="relative z-10 select-none"
+                  style={{
+                    animation:
+                      s === 'PICKED_UP' ? 'riderBounce 0.5s ease-in-out infinite alternate' :
+                      s === 'PENDING'   ? 'float 3s ease-in-out infinite' : 'none'
+                  }}
+                >
+                  <div className="text-[72px] leading-none drop-shadow-2xl">
+                    {s === 'PENDING'   && '🕐'}
+                    {s === 'ACCEPTED'  && '🏃'}
+                    {s === 'PICKED_UP' && '🛵'}
+                    {s === 'DELIVERED' && '🎉'}
+                  </div>
+                  {/* Pulsing ring when on the way */}
+                  {s === 'PICKED_UP' && (
+                    <div
+                      className="absolute -inset-3 rounded-full border-4 border-white/30"
+                      style={{ animation: 'pulseGlow 1.5s ease-in-out infinite' }}
+                    />
+                  )}
                 </div>
-                <p className="text-xs font-bold mt-2 text-gray-800">Pending</p>
+
+                {/* Status text */}
+                <div className="absolute bottom-3 left-0 right-0 text-center px-4">
+                  <p className="text-white font-black text-lg drop-shadow-md leading-tight">{heroMsg.title}</p>
+                  <p className="text-white/70 text-xs font-medium">{heroMsg.sub}</p>
+                </div>
               </div>
-              <div className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md z-10 transition-colors ${['ACCEPTED', 'PICKED_UP'].includes(activeOrder.status) ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
-                  <UserCheck size={20} />
+
+              {/* 4-step progress track */}
+              <div className="bg-white/10 backdrop-blur-sm px-5 py-4">
+                <div className="flex items-center">
+                  {steps.map((step, i) => {
+                    const done    = i < stepIndex;
+                    const current = i === stepIndex;
+                    const future  = i > stepIndex;
+                    return (
+                      <div key={step.label} className="flex items-center flex-1 last:flex-none">
+                        <div className="flex flex-col items-center gap-1">
+                          <div
+                            className={`w-9 h-9 rounded-full flex items-center justify-center text-base font-black transition-all duration-500 border-2
+                              ${done    ? 'bg-white text-green-600 border-white shadow-lg'  : ''}
+                              ${current ? 'bg-white border-white shadow-xl text-gray-900'   : ''}
+                              ${future  ? 'bg-white/10 border-white/30 text-white/40'        : ''}
+                            `}
+                            style={
+                              current ? { animation: 'pulseGlow 2s ease-in-out infinite' } :
+                              done    ? { animation: 'statusPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards' } : {}
+                            }
+                          >
+                            {done ? '✓' : step.emoji}
+                          </div>
+                          <span className={`text-[10px] font-bold tracking-tight text-center leading-tight max-w-[52px]
+                            ${done ? 'text-white' : current ? 'text-white font-black' : 'text-white/40'}`}
+                          >
+                            {step.label}
+                          </span>
+                        </div>
+
+                        {/* Connector line */}
+                        {i < steps.length - 1 && (
+                          <div className="flex-1 h-0.5 mx-1 rounded-full bg-white/20 relative overflow-hidden mb-5">
+                            <div
+                              className="absolute left-0 top-0 h-full bg-white rounded-full transition-all duration-700"
+                              style={{ width: i < stepIndex ? '100%' : '0%' }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className={`text-xs font-bold mt-2 ${['ACCEPTED', 'PICKED_UP'].includes(activeOrder.status) ? 'text-gray-800' : 'text-gray-400'}`}>Accepted</p>
               </div>
-              <div className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md z-10 transition-colors ${activeOrder.status === 'PICKED_UP' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
-                  <Bike size={20} />
+
+              {/* Footer: canteen + amount pill */}
+              <div className="flex justify-between items-center px-5 py-3 bg-black/20">
+                <p className="text-white/70 text-xs font-semibold">From {activeOrder.itemDetails?.canteenName}</p>
+                <div className="bg-white/20 border border-white/30 rounded-full px-4 py-1 text-white font-black text-sm">
+                  ₹{activeOrder.pricing?.canteenItemTotal + activeOrder.pricing?.deliveryFee} to pay
                 </div>
-                <p className={`text-xs font-bold mt-2 ${activeOrder.status === 'PICKED_UP' ? 'text-gray-800' : 'text-gray-400'}`}>On the Way</p>
               </div>
             </div>
-          </div>
-        </div>
+          );
+        })()}
+
 
         {/* The Security PIN Card */}
         <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">

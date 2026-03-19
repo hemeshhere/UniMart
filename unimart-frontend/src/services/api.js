@@ -81,6 +81,44 @@ export const cancelOrder = async (orderId) => {
   return response.data;
 };
 
+// --- Runner Endpoints ---
+
+// Fetch all PENDING orders available for runners to pick up
+export const getAvailableTasks = async () => {
+  const response = await api.get('/orders/available');
+  return response.data;
+};
+
+// Runner accepts an order (deducts 5 UniCoins)
+export const acceptOrderAsRunner = async (orderId) => {
+  const response = await api.put(`/orders/${orderId}/accept`);
+  return response.data;
+};
+
+// Get the runner's currently active mission (if any)
+export const getActiveRunnerMission = async () => {
+  const response = await api.get('/orders/runner/active');
+  return response.data;
+};
+
+// Runner marks food as collected from the canteen
+export const markPickedUp = async (orderId) => {
+  const response = await api.put(`/orders/${orderId}/pickup`);
+  return response.data;
+};
+
+// Runner submits the buyer's 4-digit PIN to complete delivery
+export const verifyDeliveryPIN = async (orderId, pin) => {
+  const response = await api.post(`/orders/${orderId}/verify`, { enteredPIN: pin });
+  return response.data;
+};
+
+// Runner aborts the mission (refunds 5 UniCoins)
+export const abortMission = async (orderId) => {
+  const response = await api.post(`/orders/${orderId}/abort`);
+  return response.data;
+};
+
 // --- Wallet Endpoints ---
 export const topUpWallet = async (amount) => {
   const response = await api.post('/wallet/topup', { amountInINR: amount });
