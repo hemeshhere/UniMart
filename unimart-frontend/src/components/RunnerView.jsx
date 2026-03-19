@@ -272,15 +272,16 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
         </button>
       )}
 
-      {/* PIN Verify */}
-      {(mission.status === 'PICKED_UP' || mission.status === 'ACCEPTED') && (
+      {/* PIN Verify — only once food has been collected */}
+      {mission.status === 'PICKED_UP' && (
+
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck size={18} className="text-green-500" />
             <h3 className="font-black text-gray-900 text-sm">Enter Delivery PIN</h3>
           </div>
           <p className="text-xs text-gray-500">Ask the buyer for their 4-digit PIN to complete the delivery.</p>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3">
             <input
               type="number"
               inputMode="numeric"
@@ -288,17 +289,18 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
               value={pin}
               onChange={e => setPin(e.target.value.slice(0, 4))}
               placeholder="• • • •"
-              className="flex-1 border-2 border-gray-200 focus:border-gray-900 outline-none rounded-xl text-center text-xl font-black tracking-[0.5em] py-3 transition-colors"
+              className="w-full border-2 border-gray-200 focus:border-gray-900 outline-none rounded-xl text-center text-xl font-black tracking-[0.5em] py-3 transition-colors"
             />
             <button
               onClick={handleVerify}
               disabled={pin.length !== 4 || verifyLoading}
-              className="px-5 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition-all disabled:opacity-40 flex items-center gap-2"
+              className="w-full py-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition-all disabled:opacity-40 flex items-center justify-center gap-2"
             >
               {verifyLoading ? <Loader size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-              {verifyLoading ? '…' : 'Verify'}
+              {verifyLoading ? 'Verifying…' : 'Verify Delivery'}
             </button>
           </div>
+
         </div>
       )}
 

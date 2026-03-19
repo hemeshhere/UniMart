@@ -319,15 +319,18 @@ const BuyerView = () => {
         })()}
 
 
-        {/* The Security PIN Card */}
-        <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-          <ShieldCheck className="absolute -right-6 -top-6 text-gray-700 opacity-30" size={120} />
-          <h3 className="text-lg font-medium text-gray-300 mb-1 relative z-10">Delivery Security PIN</h3>
-          <p className="text-sm text-gray-400 mb-4 relative z-10">Only share this code with the Runner when they hand you the food.</p>
-          <div className="text-5xl font-extrabold tracking-widest text-green-400 relative z-10">
-            {activeOrder.deliveryPIN || "••••"}
+        {/* The Security PIN Card — only visible once runner has picked up */}
+        {activeOrder.status === 'PICKED_UP' && (
+          <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+            <ShieldCheck className="absolute -right-6 -top-6 text-gray-700 opacity-30" size={120} />
+            <h3 className="text-lg font-medium text-gray-300 mb-1 relative z-10">Delivery Security PIN</h3>
+            <p className="text-sm text-gray-400 mb-4 relative z-10">Share this code with the Runner when they hand you the food.</p>
+            <div className="text-5xl font-extrabold tracking-widest text-green-400 relative z-10">
+              {activeOrder.deliveryPIN || "••••"}
+            </div>
           </div>
-        </div>
+        )}
+
 
         {/* Order Details Receipt */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
