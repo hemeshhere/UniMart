@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import AuthPage from './pages/AuthPage';
-import Dashboard from './pages/Dashboard'; // Import the real dashboard we just built!
+import Dashboard from './pages/Dashboard'; 
+import CanteenMenu from './pages/CanteenMenu'; // 🛡️ NEW: Import the Menu Page
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -12,12 +13,22 @@ function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<AuthPage />} />
           
-          {/* ONLY ONE Dashboard route, and it is strictly protected */}
+          {/* Dashboard Route */}
           <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* 🛡️ NEW: Canteen Menu Route (Also protected!) */}
+          <Route 
+            path="/canteen/:id" 
+            element={
+              <ProtectedRoute>
+                <CanteenMenu />
               </ProtectedRoute>
             } 
           />
