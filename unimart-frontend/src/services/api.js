@@ -20,14 +20,17 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Automatically log user out if token expires (401)
+// Response Interceptor: Safely handle 401s without crashing Vercel
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
+      // We log the error, but we DO NOT force a window.location.href reload
+      console.warn("Session expired or unauthorized. App will handle redirect.");
+      
+      // Optional: You can clear storage, but let React Router do the actual moving
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login'; // Force redirect to login
     }
     return Promise.reject(error);
   }

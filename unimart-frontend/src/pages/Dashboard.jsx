@@ -21,22 +21,24 @@ const Dashboard = () => {
 
   // SYNC WALLET BALANCE ON DASHBOARD LOAD
   useEffect(() => {
+    if (!user) return; 
+
     const syncUserData = async () => {
       try {
         const res = await getUserProfile();
-        // Check if backend wraps user in 'data' or 'user' property
         const freshUserData = res.user || res.data || res;
 
         if (freshUserData && freshUserData.uniCoins !== undefined) {
-          updateUser({ uniCoins: freshUserData.uniCoins }); // Instantly updates the UI!
+          if (user.uniCoins !== freshUserData.uniCoins) {
+            updateUser({ uniCoins: freshUserData.uniCoins }); 
+          }
         }
       } catch (error) {
         console.warn("Could not sync fresh user data:", error);
       }
     };
-
     syncUserData();
-  }, []);
+  }, []); 
 
   useEffect(() => {
     if (toastMsg) {
