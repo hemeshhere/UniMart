@@ -84,7 +84,7 @@ const CanteenMenu = () => {
           Back to Campus
         </button>
         
-        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 mb-10 relative overflow-hidden">
+        <div className="bg-white p-8 rounded-4xl shadow-sm border border-gray-100 mb-10 relative overflow-hidden">
           {/* Decorative background blob */}
           <div className="absolute -top-12 -right-12 w-48 h-48 bg-orange-50 rounded-full blur-3xl opacity-60"></div>
           
@@ -176,7 +176,7 @@ const CanteenMenu = () => {
               );
             })
           ) : (
-            <div className="p-16 text-center bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200">
+            <div className="p-16 text-center bg-gray-50 rounded-4xl border-2 border-dashed border-gray-200">
               <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
                 <Store className="text-gray-400" size={32} />
               </div>
@@ -189,8 +189,8 @@ const CanteenMenu = () => {
 
       {/* ── Right Side: Sticky Cart Sidebar ── */}
       {cart.length > 0 && (
-        <div className="w-full lg:w-[400px] shrink-0">
-          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-2xl shadow-gray-200/50 border border-gray-100 h-fit sticky top-24">
+        <div className="w-full lg:w-100 shrink-0">
+          <div className="bg-white p-6 md:p-8 rounded-4xl shadow-2xl shadow-gray-200/50 border border-gray-100 h-fit sticky top-24">
             
             <h3 className="text-2xl font-extrabold text-gray-900 flex items-center gap-3 mb-6">
               <div className="bg-orange-100 p-2 rounded-xl text-orange-500"><ShoppingBag size={24} /></div>
@@ -233,7 +233,7 @@ const CanteenMenu = () => {
             <button 
               onClick={handleCheckout} 
               disabled={checkoutLoading}
-              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+              className="w-full bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
             >
               {checkoutLoading ? (
                 <>

@@ -16,6 +16,12 @@ const BuyerView = () => {
   const [cancelLoading, setCancelLoading] = useState(false); 
   const [showCancelModal, setShowCancelModal] = useState(false);
 
+  const checkIsCanteenOpen = (dbIsOpen) => {
+    const currentHour = new Date().getHours(); // Gets the hour in 24h format (0-23)
+    const isTimeValid = currentHour >= 9 && currentHour < 22; 
+    return dbIsOpen && isTimeValid;
+  };
+
   // --- 1. THE GATEKEEPER: Check for Active Orders on Load ---
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -89,7 +95,7 @@ const BuyerView = () => {
         {/*THE NEW CUSTOM CANCEL OVERLAY MODAL */}
         {showCancelModal &&
         createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+                <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
                 <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-100 p-6 animate-fade-in">
                     <div className="flex justify-center mb-4">
                     <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-50">
@@ -141,7 +147,7 @@ const BuyerView = () => {
           }[s] || { title: 'Processing…', sub: '' };
 
           return (
-            <div className={`rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br ${heroBg}`}>
+            <div className={`rounded-3xl overflow-hidden shadow-2xl bg-linear-to-br ${heroBg}`}>
               <div className="relative h-44 flex items-center justify-center overflow-hidden">
                 {s === 'PICKED_UP' && (
                   <div className="absolute bottom-0 left-0 right-0 h-8 overflow-hidden opacity-30">
@@ -181,7 +187,7 @@ const BuyerView = () => {
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-base font-black transition-all duration-500 border-2 ${done ? 'bg-white text-green-600 border-white shadow-lg' : ''} ${current ? 'bg-white border-white shadow-xl text-gray-900' : ''} ${future ? 'bg-white/10 border-white/30 text-white/40' : ''}`} style={current ? { animation: 'pulseGlow 2s ease-in-out infinite' } : done ? { animation: 'statusPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards' } : {}}>
                             {done ? '✓' : step.emoji}
                           </div>
-                          <span className={`text-[10px] font-bold tracking-tight text-center leading-tight max-w-[52px] ${done ? 'text-white' : current ? 'text-white font-black' : 'text-white/40'}`}>{step.label}</span>
+                          <span className={`text-[10px] font-bold tracking-tight text-center leading-tight max-w-13 ${done ? 'text-white' : current ? 'text-white font-black' : 'text-white/40'}`}>{step.label}</span>
                         </div>
                         {i < steps.length - 1 && (
                           <div className="flex-1 h-0.5 mx-1 rounded-full bg-white/20 relative overflow-hidden mb-5">
@@ -206,7 +212,7 @@ const BuyerView = () => {
 
         {/* The Security PIN Card */}
         {activeOrder.status === 'PICKED_UP' && (
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+          <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
             <ShieldCheck className="absolute -right-6 -top-6 text-gray-700 opacity-30" size={120} />
             <h3 className="text-lg font-medium text-gray-300 mb-1 relative z-10">Delivery Security PIN</h3>
             <p className="text-sm text-gray-400 mb-4 relative z-10">Share this code with the Runner when they hand you the food.</p>
@@ -259,22 +265,39 @@ const BuyerView = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
       {canteens.length === 0 ? (
         <div className="col-span-full text-center py-20 text-gray-500">No canteens available right now.</div>
       ) : (
-        canteens.map((canteen) => (
-          <div key={canteen._id} onClick={() => handleCanteenClick(canteen)} className={`bg-white rounded-2xl p-6 border border-gray-100 transition-all ${canteen.isOpen ? 'hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-orange-200' : 'opacity-60 grayscale cursor-not-allowed'}`}>
-            <div className="flex items-start justify-between mb-4">
-              <div className="bg-orange-50 p-3 rounded-xl text-orange-600"><Store size={28} /></div>
-              <span className={`text-xs font-extrabold px-3 py-1 rounded-full ${canteen.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{canteen.isOpen ? 'OPEN' : 'CLOSED'}</span>
+        canteens.map((canteen) => {
+          // 🛡️ THE FIX: Check the time right before rendering!
+          const isActuallyOpen = checkIsCanteenOpen(canteen.isOpen);
+
+          return (
+            <div 
+              key={canteen._id} 
+              // Only allow clicks if it is ACTUALLY open
+              onClick={() => isActuallyOpen && handleCanteenClick(canteen)} 
+              className={`bg-white rounded-2xl p-6 border border-gray-100 transition-all ${isActuallyOpen ? 'hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-orange-200' : 'opacity-60 grayscale cursor-not-allowed'}`}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="bg-orange-50 p-3 rounded-xl text-orange-600">
+                  <Store size={28} />
+                </div>
+                {/* Dynamically show OPEN or CLOSED */}
+                <span className={`text-xs font-extrabold px-3 py-1 rounded-full ${isActuallyOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  {isActuallyOpen ? 'OPEN' : 'CLOSED'}
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-1">{canteen.name}</h3>
+              <p className="text-gray-500 text-sm flex items-center gap-1.5 font-medium">
+                <MapPin size={14} className="text-gray-400"/> {canteen.location}
+              </p>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-1">{canteen.name}</h3>
-            <p className="text-gray-500 text-sm flex items-center gap-1.5 font-medium"><MapPin size={14} className="text-gray-400"/> {canteen.location}</p>
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );
