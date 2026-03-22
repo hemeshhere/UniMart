@@ -95,4 +95,5 @@ This code may not be used for commercial purposes or as part of a derivative wor
 without explicit written permission from the owner.
 
 **Proprietary Software / All Rights Reserved** 
+
 This repository is made public for portfolio and educational showcase purposes only. The source code is strictly closed-source. You do not have permission to copy, clone, distribute, or use this code for any personal or commercial projects.
