@@ -163,7 +163,7 @@ exports.acceptOrder = async (req, res) => {
 
     // 1. THE BOUNCER: Atomically check >10 and deduct 5
     const updatedRunner = await User.findOneAndUpdate(
-      { _id: runnerId, uniCoins: { $gt: 10 } },  //tweak this for MAB
+      { _id: runnerId, uniCoins: { $gte: 10 } },  //tweak this for MAB
       { $inc: { uniCoins: -5 } },               
       { new: true }
     );

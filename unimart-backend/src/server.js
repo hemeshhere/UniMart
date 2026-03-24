@@ -36,7 +36,7 @@ const corsOptions = {
 
 // Apply CORS
 app.use(cors(corsOptions));
-
+app.use('/api/wallet/webhook', express.raw({ type: 'application/json' }));
 app.use(cookieParser());
 app.use(express.json());
 

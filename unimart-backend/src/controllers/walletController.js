@@ -20,9 +20,12 @@ exports.createTopUpIntent = async (req, res) => {
     }
 
     const options = {
-      amount: amountInINR * 100, // Razorpay requires paise (₹50 = 5000 paise)
+      amount: amountInINR * 100, 
       currency: "INR",
       receipt: `${req.user._id.toString().slice(-10)}_${Date.now()}`,
+      notes: {
+        userId: req.user._id.toString()
+      }
     };
 
     const order = await razorpayInstance.orders.create(options);
@@ -52,10 +55,18 @@ exports.verifyTopUpPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid payment signature. Scam detected.' });
     }
 
-    // 2. THE REPLAY ATTACK FIX: Check if this receipt was already used
-    const userWithPayment = await User.findOne({ successfulPayments: razorpay_payment_id });
+    // 2. THE RACE CONDITION FIX: Check if the webhook already handled this
+    const userWithPayment = await User.findOne({ 
+      _id: runnerId,
+      successfulPayments: razorpay_payment_id 
+    });
+    
     if (userWithPayment) {
-      return res.status(400).json({ success: false, message: 'This payment receipt has already been used.' });
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Payment verified successfully by background system.',
+        uniCoins: userWithPayment.uniCoins 
+      });
     }
 
     // 3. Fetch the absolute truth from Razorpay
@@ -64,6 +75,7 @@ exports.verifyTopUpPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Payment not captured. Status: ' + paymentDocument.status });
     }
     const trueAmountPaid = paymentDocument.amount / 100; // Divide paise by 100
+    
     const updatedUser = await User.findOneAndUpdate(
       { 
         _id: runnerId, 
@@ -75,9 +87,16 @@ exports.verifyTopUpPayment = async (req, res) => {
       },
       { new: true } // Return the updated document
     );
+
     if (!updatedUser) {
-      return res.status(400).json({ success: false, message: 'This payment has already been processed or user not found.' });
+      const safeUser = await User.findById(runnerId);
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Payment verified successfully.',
+        uniCoins: safeUser.uniCoins 
+      });
     }
+    
     res.status(200).json({ 
       success: true, 
       message: `Payment successful! ${trueAmountPaid} UniCoins added to your wallet.`,
@@ -86,5 +105,66 @@ exports.verifyTopUpPayment = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Step 3: Webhook from Razorpay (The Safety Net)
+// @route   POST /api/payments/webhook
+// @access  Public (Called by Razorpay, verified by signature)
+exports.razorpayWebhook = async (req, res) => {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers['x-razorpay-signature'];
+
+    // 1. Verify Signature using the RAW body (Crucial!)
+    const shasum = crypto.createHmac('sha256', webhookSecret);
+    shasum.update(req.body); 
+    const digest = shasum.digest('hex');
+
+    if (digest !== signature) {
+      console.error("Webhook signature mismatch. Possible malicious attack.");
+      return res.status(400).send('Invalid signature');
+    }
+
+    // 2. Signature verified! Safe to parse the payload
+    const event = JSON.parse(req.body.toString());
+
+    if (event.event === 'payment.captured') {
+      const payment = event.payload.payment.entity;
+      const paymentId = payment.id;
+      const amountPaid = payment.amount / 100; // Convert paise back to INR
+      
+      // 3. Extract the userId we securely injected into the notes earlier
+      const userId = payment.notes?.userId;
+
+      if (!userId) {
+        console.error(`Webhook Error: No userId found in notes for payment ${paymentId}`);
+        // Return 200 so Razorpay stops retrying this broken payment
+        return res.status(200).send('OK'); 
+      }
+
+      // 4. ATOMIC UPDATE: Credit user ONLY IF they haven't been credited yet
+      const updatedUser = await User.findOneAndUpdate(
+        { 
+          _id: userId, 
+          successfulPayments: { $ne: paymentId } // Prevent double crediting
+        },
+        { 
+          $inc: { uniCoins: amountPaid },
+          $push: { successfulPayments: paymentId } 
+        },
+        { new: true }
+      );
+
+      if (updatedUser) {
+        console.log(`Webhook Success: Added ${amountPaid} UniCoins to user ${userId}.`);
+      } else {
+        console.log(`Webhook Ignored: Payment ${paymentId} was already processed by the frontend.`);
+      }
+    }
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error("Webhook Server Error:", error);
+    res.status(500).send('Internal Server Error');
   }
 };
