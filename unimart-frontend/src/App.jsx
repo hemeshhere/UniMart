@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard'; 
 import CanteenMenu from './pages/CanteenMenu'; // 🛡️ NEW: Import the Menu Page
+import LandingPage from './pages/LandingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -10,7 +11,7 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthPage />} />
           
           {/* Dashboard Route */}

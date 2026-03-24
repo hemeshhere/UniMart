@@ -1,15 +1,16 @@
 import { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, User, MapPin } from 'lucide-react';
 import { loginUser, registerUser, verifyOTP } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { authenticate } = useContext(AuthContext);
 
   // Clean State Machine: 'LOGIN' | 'REGISTER' | 'OTP'
-  const [authMode, setAuthMode] = useState('LOGIN'); 
+  const [authMode, setAuthMode] = useState(location.state?.defaultMode || 'LOGIN'); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
