@@ -18,7 +18,7 @@ const BuyerView = () => {
 
   const checkIsCanteenOpen = (dbIsOpen) => {
     const currentHour = new Date().getHours(); // Gets the hour in 24h format (0-23)
-    const isTimeValid = currentHour >= 9 || currentHour < 2;
+    const isTimeValid = currentHour >= 9 && currentHour < 22;
     return dbIsOpen && isTimeValid;
   };
 
