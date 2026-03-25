@@ -390,13 +390,13 @@ const MODAL_DATA = {
               "Building the future of campus delivery, one commit at a time."
             </div>
             <div className="flex gap-4 mt-auto">
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-[#2dba4e] hover:border-[#2dba4e] hover:text-white transition-all hover:-translate-y-1">
+              <a href="https://github.com/hemeshhere" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-[#2dba4e] hover:border-[#2dba4e] hover:text-white transition-all hover:-translate-y-1">
                 <Github size={18} />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-[#0077b5] hover:border-[#0077b5] hover:text-white transition-all hover:-translate-y-1">
+              <a href="https://www.linkedin.com/in/hemeshhere/" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-[#0077b5] hover:border-[#0077b5] hover:text-white transition-all hover:-translate-y-1">
                 <Linkedin size={18} />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:border-transparent hover:text-white hover:bg-linear-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] transition-all hover:-translate-y-1">
+              <a href="https://www.instagram.com/himessshh/" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:border-transparent hover:text-white hover:bg-linear-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] transition-all hover:-translate-y-1">
                 <Instagram size={18} />
               </a>
             </div>
