@@ -17,7 +17,9 @@ connectDB();
 const allowedOrigins = [
   process.env.CLIENT_URL,    
   'http://localhost:5173',   
-  'http://localhost:3000'    
+  'http://localhost:3000',
+  'https://theunimart.in',
+  'https://www.theunimart.in'    
 ];
 
 const corsOptions = {
