@@ -1,6 +1,7 @@
+const Canteen = require('../models/Canteen');
 const Order = require('../models/Order');
 const User = require('../models/User');
-
+const crypto = require('crypto');
 // ==========================================
 // 1. DASHBOARD & DATA FETCHING ROUTES
 // ==========================================
@@ -85,29 +86,47 @@ exports.getActiveRunnerMission = async (req, res) => {
 // @access  Private (Buyer)
 exports.createOrder = async (req, res) => {
   try {
-    const { itemDetails, pricing, pickupCoordinates, dropoffCoordinates } = req.body;
-
-    // Calculate total on backend to prevent frontend tampering
-    const totalToPayAtDoor = pricing.canteenItemTotal + pricing.deliveryFee;
-
-    const generatedPIN = Math.floor(1000 + Math.random() * 9000).toString();
-
+    const { itemDetails, canteenId, pricing, pickupCoordinates, dropoffCoordinates } = req.body;
+    const canteen = await Canteen.findById(canteenId).select('packingFee').lean();
+    if (!canteen) {
+      return res.status(404).json({ success: false, message: "Canteen not found" });
+    }
+    const actualPackingFee = canteen.packingFee || 0;
+    const verifiedTotal = pricing.canteenItemTotal + actualPackingFee + pricing.deliveryFee;
+    const generatedPIN = crypto.randomInt(1000, 10000).toString();
     const newOrder = await Order.create({
       buyerId: req.user._id,
+      canteenId,
       itemDetails,
       pricing: {
         canteenItemTotal: pricing.canteenItemTotal,
+        packingFee: actualPackingFee,
         deliveryFee: pricing.deliveryFee,
-        totalToPayAtDoor: totalToPayAtDoor
+        totalToPayAtDoor: verifiedTotal
       },
       deliveryPIN: generatedPIN,
       pickupLocation: { type: 'Point', coordinates: pickupCoordinates },
       dropoffLocation: { type: 'Point', coordinates: dropoffCoordinates }
     });
 
-    res.status(201).json({ success: true, data: newOrder });
+    res.status(201).json({ 
+      success: true, 
+      message: "Order placed successfully",
+      data: {
+        orderId: newOrder._id,
+        totalToPay: verifiedTotal,
+        pin: generatedPIN
+      } 
+    });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    // 7. ERROR HANDLING: Check for specific validation errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    
+    console.error("Order Creation Error:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 

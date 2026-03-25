@@ -2,9 +2,10 @@ import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Wallet, LogOut, ArrowRightLeft, Plus, CreditCard, CheckCircle, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import BuyerView from '../components/BuyerView';
 import RunnerView from '../components/RunnerView';
-import { topUpWallet, getUserProfile, verifyRazorpayPayment } from '../services/api';
+import { topUpWallet, getUserProfile, verifyRazorpayPayment, getActiveCustomerOrder, getActiveRunnerMission } from '../services/api';
 
 const Dashboard = () => {
   const { user, updateUser, logout } = useContext(AuthContext);
@@ -12,6 +13,8 @@ const Dashboard = () => {
 
   const [activeMode, setActiveMode] = useState('BUYER');
   const [toastMsg, setToastMsg] = useState('');
+  const [isLocked, setIsLocked] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   // Wallet & UI States
   const [showWalletModal, setShowWalletModal] = useState(false);
@@ -41,6 +44,35 @@ const Dashboard = () => {
     syncUserData();
   }, []); 
 
+  // REACT QUERY FOR ACTIVE SESSIONS
+  const { data: runnerRes, isLoading: runnerLoading } = useQuery({
+    queryKey: ['activeRunnerMission'],
+    queryFn: getActiveRunnerMission,
+    retry: false
+  });
+
+  const { data: buyerRes, isLoading: buyerLoading } = useQuery({
+    queryKey: ['activeCustomerOrder'],
+    queryFn: getActiveCustomerOrder,
+    retry: false
+  });
+
+  // SET DEFAULT MODE BASED ON LOADED QUERIES
+  useEffect(() => {
+    if (!runnerLoading && !buyerLoading && !initialCheckDone) {
+      if (runnerRes?.hasActiveMission) {
+        setActiveMode('RUNNER');
+      } else {
+        const order = Array.isArray(buyerRes?.data) ? buyerRes.data[0] : buyerRes?.data;
+        const activeStatuses = ['PENDING', 'ACCEPTED', 'PICKED_UP'];
+        if (order && order.status && activeStatuses.includes(order.status)) {
+          setActiveMode('BUYER');
+        }
+      }
+      setInitialCheckDone(true);
+    }
+  }, [runnerLoading, buyerLoading, runnerRes, buyerRes, initialCheckDone]);
+
   useEffect(() => {
     if (toastMsg) {
       const timer = setTimeout(() => setToastMsg(''), 3000);
@@ -54,6 +86,10 @@ const Dashboard = () => {
   };
 
   const toggleMode = () => {
+    if (isLocked) {
+      setToastMsg('Please complete your active delivery or order first.');
+      return;
+    }
     if (activeMode === 'BUYER') {
       if (user?.uniCoins >= 10) {
         setActiveMode('RUNNER');
@@ -260,7 +296,7 @@ const Dashboard = () => {
               </button>
             </div>
 
-            <button onClick={toggleMode} className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${activeMode === 'BUYER' ? 'bg-gray-100 text-gray-900 hover:bg-gray-200' : 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
+            <button onClick={toggleMode} disabled={isLocked} className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''} ${activeMode === 'BUYER' ? 'bg-gray-100 text-gray-900 hover:bg-gray-200' : 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
               }`}>
               {activeMode === 'BUYER' ? 'Switch to Runner' : 'Switch to Buyer'}
             </button>
@@ -286,7 +322,8 @@ const Dashboard = () => {
 
         <button
           onClick={toggleMode}
-          className="relative -top-6 w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center text-white shadow-lg shadow-gray-900/20 active:scale-95 transition-transform"
+          disabled={isLocked}
+          className={`relative -top-6 w-12 h-12 rounded-full flex items-center justify-center transition-transform ${isLocked ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-900 text-white shadow-lg shadow-gray-900/20 active:scale-95'}`}
         >
           <ArrowRightLeft size={20} />
         </button>
@@ -320,7 +357,15 @@ const Dashboard = () => {
         </div>
 
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-          {activeMode === 'BUYER' ? <BuyerView /> : <RunnerView />}
+          {!initialCheckDone ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+            </div>
+          ) : activeMode === 'BUYER' ? (
+            <BuyerView onLock={setIsLocked} />
+          ) : (
+            <RunnerView onLock={setIsLocked} />
+          )}
         </div>
       </main>
     </div>

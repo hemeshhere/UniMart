@@ -3,16 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Store, ShoppingBag, Plus, Minus, ArrowLeft, MapPin, Clock, Bike, CheckCircle, ShieldCheck, UserCheck, AlertTriangle } from 'lucide-react';
 import { getCanteens, getActiveCustomerOrder, cancelOrder } from '../services/api';
 import { createPortal } from "react-dom";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-const BuyerView = () => {
+const BuyerView = ({ onLock }) => {
   const navigate = useNavigate();
 
-  // Data States
-  const [canteens, setCanteens] = useState([]);
-  const [activeOrder, setActiveOrder] = useState(null);
+  const queryClient = useQueryClient();
 
-  // Loading & UI States
-  const [loading, setLoading] = useState(true);
+  // Modal & Loading States
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
@@ -22,35 +20,31 @@ const BuyerView = () => {
     return dbIsOpen && isTimeValid;
   };
 
-  // --- 1. THE GATEKEEPER: Check for Active Orders on Load ---
+  // --- 1. THE GATEKEEPER: Caching with React Query ---
+  const { data: orderRes, isLoading: orderLoading } = useQuery({
+    queryKey: ['activeCustomerOrder'],
+    queryFn: getActiveCustomerOrder,
+    retry: false
+  });
+
+  const { data: canteensRes, isLoading: canteensLoading } = useQuery({
+    queryKey: ['canteens'],
+    queryFn: getCanteens,
+  });
+
+  // Derived State
+  const actualOrder = Array.isArray(orderRes?.data) ? orderRes.data[0] : orderRes?.data;
+  const activeStatuses = ['PENDING', 'ACCEPTED', 'PICKED_UP'];
+  const activeOrder = (actualOrder && actualOrder.status && activeStatuses.includes(actualOrder.status)) ? actualOrder : null;
+
+  const canteens = Array.isArray(canteensRes?.data) ? canteensRes.data : (Array.isArray(canteensRes) ? canteensRes : []);
+  const loading = orderLoading || (!activeOrder && canteensLoading);
+
+  // Auto Lock/Unlock Dashboard
   useEffect(() => {
-    const initializeDashboard = async () => {
-      try {
-        try {
-          const orderRes = await getActiveCustomerOrder();
-          const actualOrder = Array.isArray(orderRes.data) ? orderRes.data[0] : orderRes.data;
-          const activeStatuses = ['PENDING', 'ACCEPTED', 'PICKED_UP'];
-          if (actualOrder && actualOrder.status && activeStatuses.includes(actualOrder.status)) {
-            setActiveOrder(actualOrder);
-            setLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.log("No active orders found. Proceeding to grid...");
-        }
-
-        const res = await getCanteens();
-        const canteenData = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
-        setCanteens(canteenData);
-      } catch (error) {
-        console.warn("⚠️ API failed to load canteens.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeDashboard();
-  }, []);
+    if (activeOrder) onLock && onLock(true);
+    else onLock && onLock(false);
+  }, [activeOrder, onLock]);
 
   // --- 2. SEAMLESS NAVIGATION ---
   const handleCanteenClick = (canteen) => {
@@ -70,13 +64,8 @@ const BuyerView = () => {
     setCancelLoading(true);
     try {
       await cancelOrder(activeOrder._id);
-      setActiveOrder(null);
+      queryClient.invalidateQueries({ queryKey: ['activeCustomerOrder'] });
       setShowCancelModal(false);
-
-      if (canteens.length === 0) {
-        const res = await getCanteens();
-        setCanteens(Array.isArray(res.data) ? res.data : []);
-      }
     } catch (error) {
       alert(error.response?.data?.message || "Failed to cancel the order. It might already be picked up!");
       setShowCancelModal(false);
@@ -203,7 +192,7 @@ const BuyerView = () => {
               <div className="flex justify-between items-center px-5 py-3 bg-black/20">
                 <p className="text-white/70 text-xs font-semibold">From {activeOrder.itemDetails?.canteenName}</p>
                 <div className="bg-white/20 border border-white/30 rounded-full px-4 py-1 text-white font-black text-sm">
-                  ₹{activeOrder.pricing?.canteenItemTotal + activeOrder.pricing?.deliveryFee} to pay
+                  ₹{activeOrder.pricing?.totalToPayAtDoor} to pay
                 </div>
               </div>
             </div>
@@ -233,15 +222,27 @@ const BuyerView = () => {
               </div>
             ))}
           </div>
-          <div className="border-t border-gray-100 pt-3 text-sm text-gray-500 flex justify-between">
-            <span>Delivery Fee</span>
-            <span className="text-gray-900 font-bold">₹{activeOrder.pricing?.deliveryFee}</span>
+          <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
+            {activeOrder.pricing?.packingFee > 0 && (
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Canteen Packing Charge</span>
+                <span className="text-gray-900 font-bold">₹{activeOrder.pricing.packingFee}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>Delivery Fee</span>
+              <span className="text-gray-900 font-bold">₹{activeOrder.pricing?.deliveryFee}</span>
+            </div>
+            <div className="flex justify-between text-base border-t border-dashed border-gray-100 pt-3 mt-1">
+              <span className="font-bold text-gray-900">Total Amount</span>
+              <span className="text-orange-600 font-black">₹{activeOrder.pricing?.totalToPayAtDoor}</span>
+            </div>
           </div>
         </div>
 
         {/* Actions Container */}
         <div className="flex flex-col gap-2">
-          <button onClick={() => window.location.reload()} className="w-full py-4 text-center text-gray-500 font-medium bg-white hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors">
+          <button onClick={() => queryClient.invalidateQueries({ queryKey: ['activeCustomerOrder'] })} className="w-full py-4 text-center text-gray-500 font-medium bg-white hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors">
             Refresh Status
           </button>
           {activeOrder.status !== 'PICKED_UP' && (

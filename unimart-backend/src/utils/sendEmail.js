@@ -30,47 +30,42 @@ const sendEmail = async (options) => {
 
     // 2. Email Template
     const htmlTemplate = `
-  <div style="margin:0; padding:0; background-color:#f4f6f8; font-family:Arial, sans-serif;">
-    
-    <div style="max-width:520px; margin:40px auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-      
-      <!-- Header -->
-      <div style="background:#007bff; padding:20px; text-align:center;">
-        <h1 style="color:#ffffff; margin:0; font-size:22px;">
-          ${process.env.FROM_NAME}
-        </h1>
-      </div>
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fafbfc; padding: 40px 20px; margin: 0;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;">
+          
+          <div style="background-color: #1c2438; padding: 30px; text-align: center;">
+            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">
+              Uni<span style="color: #f97316;">Mart</span>
+            </h1>
+            <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 14px;">Campus Food Network</p>
+          </div>
 
-      <!-- Body -->
-      <div style="padding:30px; text-align:center;">
-        
-        <p style="font-size:16px; color:#555; margin-bottom:10px;">
-          Your One-Time Password (OTP)
-        </p>
+          <div style="padding: 40px 30px;">
+            <h2 style="margin: 0 0 20px 0; color: #1e293b; font-size: 22px;">${options.subject}</h2>
+            
+            <p style="margin: 0 0 30px 0; color: #64748b; font-size: 16px; line-height: 1.6;">
+              ${options.message}
+            </p>
 
-        <div style="display:inline-block; background:#f1f5ff; padding:15px 25px; border-radius:8px; margin:20px 0;">
-          <span style="font-size:28px; letter-spacing:6px; color:#007bff; font-weight:bold;">
-            ${options.message}
-          </span>
+            <div style="background-color: #fff7ed; border: 2px dashed #fed7aa; border-radius: 12px; padding: 25px; text-align: center; margin-bottom: 30px;">
+              <span style="font-size: 36px; font-weight: 900; letter-spacing: 10px; color: #ea580c;">${options.otp}</span>
+            </div>
+
+            <p style="margin: 0; color: #ef4444; font-size: 14px; font-weight: 600; text-align: center;">
+              ⏳ This code expires in 10 minutes.
+            </p>
+          </div>
+
+          <div style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #f1f5f9;">
+            <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+              If you didn't request this code, you can safely ignore this email.<br/>
+              © ${new Date().getFullYear()} UniMart Technologies. All rights reserved.
+            </p>
+          </div>
+
         </div>
-
-        <p style="color:#555; font-size:14px;">
-          This OTP is valid for <b>5 minutes</b>.
-        </p>
-
       </div>
-
-      <!-- Footer -->
-      <div style="padding:20px; text-align:center; border-top:1px solid #eee;">
-        <p style="font-size:12px; color:#999; margin:0;">
-          If you did not request this, please ignore this email.
-        </p>
-      </div>
-
-    </div>
-
-  </div>
-`;
+    `;
 
     // 3. Email Config
     const message = {

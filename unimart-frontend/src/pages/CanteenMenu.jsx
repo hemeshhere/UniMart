@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Store, ShoppingBag, Plus, Minus, ArrowLeft, MapPin, Info } from 'lucide-react';
-import { getCanteenById, createOrder } from '../services/api';
+import { getCanteenById, createOrder, getActiveCustomerOrder } from '../services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const CanteenMenu = () => {
   const { id } = useParams();
@@ -12,26 +13,37 @@ const CanteenMenu = () => {
   const headerName = location.state?.canteenName || 'Loading...';
   const headerLocation = location.state?.canteenLocation || '';
 
-  const [canteen, setCanteen] = useState(null);
+  const queryClient = useQueryClient();
+
   const [cart, setCart] = useState([]);
-  const [menuLoading, setMenuLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
 
+  // React Query implementation
+  const { data: orderRes } = useQuery({
+    queryKey: ['activeCustomerOrder'],
+    queryFn: getActiveCustomerOrder,
+    retry: false
+  });
+
+  const { data: canteenRes, isLoading: menuLoading } = useQuery({
+    queryKey: ['canteen', id],
+    queryFn: () => getCanteenById(id),
+    enabled: !!id
+  });
+
+  const canteen = canteenRes?.data || canteenRes;
+  const actualOrder = Array.isArray(orderRes?.data) ? orderRes.data[0] : orderRes?.data;
+
   useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        const res = await getCanteenById(id);
-        setCanteen(res.data || res);
-      } catch (error) {
-        alert("Could not load the menu for this canteen.");
-      } finally {
-        setMenuLoading(false);
-      }
-    };
-    fetchMenu();
-  }, [id]);
+    // 🛡️ BLOCKER: Check if they already have an active order using cached data
+    const activeStatuses = ['PENDING', 'ACCEPTED', 'PICKED_UP'];
+    if (actualOrder && actualOrder.status && activeStatuses.includes(actualOrder.status)) {
+      alert("You already have an active order! Please complete or cancel it first before placing a new one.");
+      navigate('/dashboard');
+    }
+  }, [actualOrder, navigate]);
 
   const addToCart = (item) => {
     setCart((prev) => {
@@ -45,23 +57,37 @@ const CanteenMenu = () => {
     setCart((prev) => prev.map((i) => i._id === itemId ? { ...i, qty: i.qty - 1 } : i).filter(i => i.qty > 0));
   };
 
+  const packingFee = canteen?.packingFee || 0;
   const cartTotal = cart.reduce((total, item) => total + (item.price * item.qty), 0);
   const deliveryFee = 20;
+  const grandTotal = cartTotal + deliveryFee + packingFee;
 
   const handleCheckout = async () => {
+    if (cart.length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
     setCheckoutLoading(true);
     try {
       const orderPayload = {
+        canteenId: id,
         itemDetails: {
           canteenName: canteen?.name || headerName,
           items: cart.map(item => ({ name: item.name, qty: item.qty, price: item.price }))
         },
-        pricing: { canteenItemTotal: cartTotal, deliveryFee: deliveryFee },
+        pricing: { 
+          canteenItemTotal: cartTotal, 
+          packingFee: packingFee,
+          deliveryFee: deliveryFee,
+          totalToPayAtDoor: grandTotal
+        },
         pickupCoordinates: [75.7051, 31.2530],
         dropoffCoordinates: [75.7065, 31.2545] 
       };
 
       await createOrder(orderPayload);
+      queryClient.invalidateQueries({ queryKey: ['activeCustomerOrder'] });
+      queryClient.invalidateQueries({ queryKey: ['availableTasks'] });
       setCart([]); 
       navigate('/dashboard'); 
     } catch (error) {
@@ -183,7 +209,11 @@ const CanteenMenu = () => {
                                 <button onClick={() => addToCart(item)} className="p-2 hover:bg-orange-50 rounded-lg text-orange-600 transition-colors"><Plus size={16} strokeWidth={3} /></button>
                               </div>
                             ) : (
-                              <button onClick={() => addToCart(item)} className="text-orange-600 bg-orange-50 border border-orange-100 hover:bg-orange-500 hover:text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-sm">
+                              <button 
+                                onClick={() => item.isAvailable !== false && addToCart(item)} 
+                                disabled={item.isAvailable === false}
+                                className={`text-orange-600 bg-orange-50 ... ${item.isAvailable === false ? 'cursor-not-allowed' : ''}`}
+                              >
                                 ADD
                               </button>
                             )}
@@ -221,7 +251,7 @@ const CanteenMenu = () => {
               </div>
               <div className="text-left">
                 <div className="font-extrabold text-base sm:text-lg leading-tight">{cart.reduce((total, item) => total + item.qty, 0)} Items</div>
-                <div className="text-white/80 font-medium text-xs sm:text-sm">₹{cartTotal + deliveryFee} • <span className="underline decoration-white/40 underline-offset-2">View Cart</span></div>
+                <div className="text-white/80 font-medium text-xs sm:text-sm">₹{grandTotal} • <span className="underline decoration-white/40 underline-offset-2">View Cart</span></div>
               </div>
             </div>
             
@@ -281,11 +311,16 @@ const CanteenMenu = () => {
                 <span className="text-gray-900 font-semibold">₹{deliveryFee}</span>
               </div>
               
+              {packingFee > 0 && (
+                <div className="flex justify-between text-sm text-gray-600 font-medium">
+                  <span>Packing Charge</span>
+                  <span className="text-gray-900 font-semibold">₹{packingFee}</span>
+                </div>
+              )}
               <div className="border-t-2 border-dashed border-gray-200 pt-3 mt-3"></div>
-              
               <div className="flex justify-between items-center">
                 <span className="text-gray-800 font-bold">To Pay</span>
-                <span className="text-2xl font-black text-gray-900">₹{cartTotal + deliveryFee}</span>
+                <span className="text-2xl font-black text-gray-900">₹{grandTotal}</span>
               </div>
             </div>
 

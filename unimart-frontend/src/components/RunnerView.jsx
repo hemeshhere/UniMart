@@ -9,8 +9,8 @@ import {
   getActiveRunnerMission,
   markPickedUp,
   verifyDeliveryPIN,
-  abortMission
 } from '../services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -321,10 +321,9 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
 
 // ─── Main RunnerView ─────────────────────────────────────────────────────────
 
-const RunnerView = () => {
-  const [pendingOrders, setPendingOrders] = useState([]);
-  const [activeMission, setActiveMission] = useState(null);
-  const [fetchLoading, setFetchLoading] = useState(true);
+const RunnerView = ({ onLock }) => {
+  const queryClient = useQueryClient();
+
   const [acceptingId, setAcceptingId] = useState(null);
   const [pickupLoading, setPickupLoading] = useState(false);
   const [abortLoading, setAbortLoading] = useState(false);
@@ -335,51 +334,38 @@ const RunnerView = () => {
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Fetch available tasks
-  const fetchTasks = useCallback(async () => {
-    try {
-      const res = await getAvailableTasks();
-      const tasks = Array.isArray(res.data) ? res.data : [];
-      setPendingOrders(tasks);
-    } catch (err) {
-      // Silently fail on background refresh
-    }
-  }, []);
+  // React Query: Active Mission
+  const { data: missionRes, isLoading: missionLoading } = useQuery({
+    queryKey: ['activeRunnerMission'],
+    queryFn: getActiveRunnerMission,
+    retry: false
+  });
 
-  // On mount: check for existing active mission, then load pending orders
-  useEffect(() => {
-    const init = async () => {
-      setFetchLoading(true);
-      try {
-        const missionRes = await getActiveRunnerMission();
-        if (missionRes.hasActiveMission && missionRes.data) {
-          setActiveMission(missionRes.data);
-          setFetchLoading(false);
-          return; // No need to load radar if already on a mission
-        }
-      } catch (err) {
-        // No active mission, proceed
-      }
-      await fetchTasks();
-      setFetchLoading(false);
-    };
-    init();
-  }, [fetchTasks]);
+  // React Query: Pending Radar Tasks (auto-polls every 15s)
+  const { data: tasksRes, isLoading: tasksLoading, refetch: refetchTasks } = useQuery({
+    queryKey: ['availableTasks'],
+    queryFn: getAvailableTasks,
+    refetchInterval: 15000,
+  });
 
-  // Auto-refresh every 15s when not on an active mission
+  // Derived State
+  const activeMission = (missionRes?.hasActiveMission && missionRes?.data) ? missionRes.data : null;
+  const pendingOrders = Array.isArray(tasksRes?.data) ? tasksRes.data : [];
+  const fetchLoading = missionLoading || (tasksLoading && !tasksRes);
+
   useEffect(() => {
-    if (activeMission) return;
-    const interval = setInterval(fetchTasks, 15000);
-    return () => clearInterval(interval);
-  }, [activeMission, fetchTasks]);
+    if (activeMission) onLock && onLock(true);
+    else onLock && onLock(false);
+  }, [activeMission, onLock]);
 
   // ── Handlers ────────────────────────────────────────────────────────────
 
   const handleAccept = async (orderId) => {
     setAcceptingId(orderId);
     try {
-      const res = await acceptOrderAsRunner(orderId);
-      setActiveMission(res.data);
+      await acceptOrderAsRunner(orderId);
+      queryClient.invalidateQueries({ queryKey: ['activeRunnerMission'] });
+      queryClient.invalidateQueries({ queryKey: ['availableTasks'] });
       showToast('Mission secured! 5 UniCoins deducted.', 'success');
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to accept order.';
@@ -390,8 +376,7 @@ const RunnerView = () => {
       } else {
         showToast(msg, 'error');
       }
-      // Refresh list to remove the order if it was taken
-      fetchTasks();
+      queryClient.invalidateQueries({ queryKey: ['availableTasks'] });
     } finally {
       setAcceptingId(null);
     }
@@ -400,8 +385,8 @@ const RunnerView = () => {
   const handlePickedUp = async (orderId) => {
     setPickupLoading(true);
     try {
-      const res = await markPickedUp(orderId);
-      setActiveMission(res.data);
+      await markPickedUp(orderId);
+      queryClient.invalidateQueries({ queryKey: ['activeRunnerMission'] });
       showToast('Food collected! Head to the drop-off point.', 'success');
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to update status.', 'error');
@@ -413,9 +398,9 @@ const RunnerView = () => {
   const handleVerify = async (orderId, pin) => {
     try {
       await verifyDeliveryPIN(orderId, pin);
-      setActiveMission(null);
+      queryClient.invalidateQueries({ queryKey: ['activeRunnerMission'] });
+      queryClient.invalidateQueries({ queryKey: ['availableTasks'] });
       showToast('Delivery complete! Great work 🎉', 'success');
-      fetchTasks();
     } catch (err) {
       showToast(err.response?.data?.message || 'Incorrect PIN.', 'error');
     }
@@ -425,9 +410,9 @@ const RunnerView = () => {
     setAbortLoading(true);
     try {
       await abortMission(orderId);
-      setActiveMission(null);
+      queryClient.invalidateQueries({ queryKey: ['activeRunnerMission'] });
+      queryClient.invalidateQueries({ queryKey: ['availableTasks'] });
       showToast('Mission aborted. 5 UniCoins refunded.', 'info');
-      fetchTasks();
     } catch (err) {
       showToast(err.response?.data?.message || 'Could not abort mission.', 'error');
     } finally {
@@ -478,7 +463,7 @@ const RunnerView = () => {
               <p className="text-gray-500 text-sm mt-0.5">Auto-refreshes every 15 seconds</p>
             </div>
             <button
-              onClick={fetchTasks}
+              onClick={() => refetchTasks()}
               className="flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-gray-900 bg-white border border-gray-200 hover:border-gray-400 px-4 py-2 rounded-xl transition-all active:scale-95"
             >
               <RefreshCw size={14} />

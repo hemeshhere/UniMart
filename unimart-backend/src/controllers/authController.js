@@ -78,7 +78,8 @@ exports.registerUser = async (req, res, next) => {
     await sendEmail({ 
       email: normalizedEmail, 
       subject: 'UniMart Verification Code', 
-      message: `Your UniMart OTP is: ${generatedOtp}. This code is valid for 10 minutes.` 
+      message: `Your UniMart OTP is: ${generatedOtp}. This code is valid for 10 minutes.`,
+      otp: generatedOtp 
     });
     res.status(200).json({ success: true, message: 'OTP sent to email. Please verify to complete registration.' });
   } catch (error) { 
@@ -207,7 +208,8 @@ exports.forgotPassword = async (req, res, next) => {
     await sendEmail({
       email: user.email,
       subject: 'UniMart Password Recovery Code',
-      message: `Your password reset code is: ${generatedOtp}. This code expires in 10 minutes. If you did not request this, please ignore this email.`
+      message: `Your password reset code is: ${generatedOtp}. This code expires in 10 minutes. If you did not request this, please ignore this email.`,
+      otp: generatedOtp
     });
 
     res.status(200).json({ 

@@ -22,6 +22,7 @@ const orderSchema = new mongoose.Schema({
   // --- THE ECONOMICS (Cleaned up) ---
   pricing: {
     canteenItemTotal: { type: Number, required: true }, // Cost of food
+    packingFee: { type: Number, default: 0 },
     deliveryFee: { type: Number, required: true },      // Runner's cut
     totalToPayAtDoor: { type: Number, required: true }  // Item Total + Delivery Fee
   },
