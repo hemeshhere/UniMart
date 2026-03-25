@@ -15,9 +15,25 @@ const userSchema = new mongoose.Schema({
     required: true,
     select: false // Never return password in standard database queries
   },
-  hostelBlock: {
+  phoneNumber: {
     type: String,
-    required: true
+    required: [true, 'Phone number is required'],
+    unique: true,
+    match: [/^[0-9]{10}$/, 'Please enter a valid 10-digit phone number']
+  },
+  hostel: {
+    type: String,
+    required: [true, 'Please select your hostel'],
+    enum: ['BH-1', 'BH-2', 'BH-3', 'BH-4', 'BH-5', 'BH-6', 'BH-7', 'BS-8', 'BS-9', 'BS-10', 'GH-1', 'GH-2', 'GH-3', 'GH-4', 'GH-5', 'GH-6','GH-7'] 
+  },
+  roomNumber: {
+    type: String,
+    required: [true, 'Room number is required']
+  },
+  gender: {
+    type: String,
+    required: [true, 'Please select your gender'],
+    enum: ['Male', 'Female', 'Other']
   },
   rating: {
     type: Number,
@@ -41,8 +57,9 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  resetPasswordOtp: String,
+  resetPasswordOtpExpire: Date,
 }, { timestamps: true });
-
 
 
 userSchema.methods.matchPassword = async function(enteredPassword) {

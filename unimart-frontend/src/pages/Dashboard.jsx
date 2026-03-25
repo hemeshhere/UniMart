@@ -138,9 +138,9 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20 sm:pb-0 font-sans text-gray-900">
       
-      {/* 🛑 1. LIGHTWEIGHT TOP-UP MODAL 🛑 */}
+      {/* 1. LIGHTWEIGHT TOP-UP MODAL */}
       {showWalletModal && (
-        <div className="fixed inset-0 w-screen h-screen bg-gray-900/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 transition-all">
+        <div className="fixed inset-0 w-screen h-screen bg-gray-900/40 backdrop-blur-sm z-9999 flex items-center justify-center p-4 transition-all">
           <div className="bg-white/95 backdrop-blur-xl border border-white/50 rounded-3xl p-8 max-w-sm w-full shadow-2xl shadow-gray-900/10 animate-in zoom-in-95 duration-200">
             
             <div className="flex justify-between items-center mb-6">
@@ -188,7 +188,7 @@ const Dashboard = () => {
 
       {/* 🛑 2. LIGHTWEIGHT SUCCESS CELEBRATION MODAL 🛑 */}
       {showSuccessModal && (
-        <div className="fixed inset-0 w-screen h-screen bg-gray-900/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 w-screen h-screen bg-gray-900/40 backdrop-blur-sm z-9999 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl shadow-gray-900/10 flex flex-col items-center text-center animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
             
             <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-5 shadow-inner">
@@ -305,7 +305,7 @@ const Dashboard = () => {
       {/* --- MAIN CONTENT --- */}
       <main className="max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
         {toastMsg && (
-          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[99999] bg-gray-900 text-white px-5 py-2.5 rounded-full shadow-lg font-semibold text-sm animate-in slide-in-from-top-4 fade-in duration-200">
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-99999 bg-gray-900 text-white px-5 py-2.5 rounded-full shadow-lg font-semibold text-sm animate-in slide-in-from-top-4 fade-in duration-200">
             {toastMsg}
           </div>
         )}

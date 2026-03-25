@@ -52,6 +52,24 @@ export const verifyOTP = async (email, otp) => {
   return response.data;
 };
 
+export const forgotPassword = async (email) => {
+  try {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const resetPassword = async (email, otp, newPassword) => {
+  try {
+    const response = await api.post('/auth/reset-password', { email, otp, newPassword });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getUserProfile = async () => {
   const response = await api.get('/auth/me'); 
   return response.data;
