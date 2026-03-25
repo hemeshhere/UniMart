@@ -16,6 +16,8 @@ const CanteenMenu = () => {
   const [cart, setCart] = useState([]);
   const [menuLoading, setMenuLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -70,10 +72,8 @@ const CanteenMenu = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-8 animate-fade-in relative min-h-screen">
-      
-      {/* ── Left Side: Menu Section ── */}
-      <div className="flex-1 w-full max-w-4xl">
+    <>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in relative min-h-screen pb-32">
         
         {/* Navigation & Header Card */}
         <button 
@@ -120,13 +120,33 @@ const CanteenMenu = () => {
               ))}
             </div>
           ) : canteen?.menu && canteen.menu.length > 0 ? (
-            canteen.menu.map((category, index) => {
-              const isCategoryFormat = category.categoryName && Array.isArray(category.items);
-              const itemsToRender = isCategoryFormat ? category.items : [category];
-              const sectionTitle = isCategoryFormat ? category.categoryName : (index === 0 ? "Recommended" : null);
+            <>
+              {/* Category Filter Bar */}
+              <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-4 mb-6 sticky top-2 z-20 bg-white/80 backdrop-blur-md p-2 -mx-2 px-2 rounded-2xl">
+                {['All', ...new Set(canteen.menu.map((cat, index) => cat.categoryName || (index === 0 ? "Recommended" : null)).filter(Boolean))].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`px-6 py-2 rounded-2xl font-bold whitespace-nowrap transition-all shrink-0
+                      ${activeCategory === cat 
+                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30 border border-orange-600' 
+                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm hover:text-gray-900'}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
 
-              return (
-                <div key={category._id || `cat-${index}`}>
+              {canteen.menu.map((category, index) => {
+                const isCategoryFormat = category.categoryName && Array.isArray(category.items);
+                const sectionTitle = isCategoryFormat ? category.categoryName : (index === 0 ? "Recommended" : null);
+
+                if (activeCategory !== 'All' && sectionTitle !== activeCategory) return null;
+
+                const itemsToRender = isCategoryFormat ? category.items : [category];
+
+                return (
+                  <div key={category._id || `cat-${index}`} className="mb-10 animate-fade-in">
                   {sectionTitle && (
                     <div className="flex items-center gap-3 mb-6">
                       <h3 className="text-xl font-bold text-gray-900">{sectionTitle}</h3>
@@ -174,7 +194,8 @@ const CanteenMenu = () => {
                   </div>
                 </div>
               );
-            })
+            })}
+            </>
           ) : (
             <div className="p-16 text-center bg-gray-50 rounded-4xl border-2 border-dashed border-gray-200">
               <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
@@ -187,15 +208,53 @@ const CanteenMenu = () => {
         </div>
       </div>
 
-      {/* ── Right Side: Sticky Cart Sidebar ── */}
+      {/* ── Floating Bottom Cart Bar ── */}
       {cart.length > 0 && (
-        <div className="w-full lg:w-100 shrink-0">
-          <div className="bg-white p-6 md:p-8 rounded-4xl shadow-2xl shadow-gray-200/50 border border-gray-100 h-fit sticky top-24">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl z-40 animate-fade-in">
+          <div 
+            onClick={() => setIsCartModalOpen(true)}
+            className="bg-orange-500 rounded-4xl p-3 shadow-2xl flex items-center justify-between text-white border border-orange-600 cursor-pointer hover:shadow-orange-500/40 transition-shadow"
+          >
+            <div className="flex items-center gap-3 sm:gap-4 pl-1">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                <ShoppingBag size={24} className="text-white" />
+              </div>
+              <div className="text-left">
+                <div className="font-extrabold text-base sm:text-lg leading-tight">{cart.reduce((total, item) => total + item.qty, 0)} Items</div>
+                <div className="text-white/80 font-medium text-xs sm:text-sm">₹{cartTotal + deliveryFee} • <span className="underline decoration-white/40 underline-offset-2">View Cart</span></div>
+              </div>
+            </div>
             
-            <h3 className="text-2xl font-extrabold text-gray-900 flex items-center gap-3 mb-6">
-              <div className="bg-orange-100 p-2 rounded-xl text-orange-500"><ShoppingBag size={24} /></div>
-              Your Order
-            </h3>
+            <button 
+              onClick={(e) => { e.stopPropagation(); handleCheckout(); }}
+              disabled={checkoutLoading}
+              className="flex items-center justify-center gap-2 font-black text-sm sm:text-lg pr-4 pl-6 py-2 hover:translate-x-1 transition-transform disabled:opacity-50 text-white"
+            >
+              {checkoutLoading ? '...' : 'NEXT →'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Cart Modal ── */}
+      {isCartModalOpen && cart.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[#1c2438]/60 backdrop-blur-sm p-0 sm:p-5 animate-fade-in" onClick={() => setIsCartModalOpen(false)}>
+          <div 
+            className="bg-white w-full sm:max-w-lg rounded-t-[2.5rem] sm:rounded-4xl p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col transform translate-y-0"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <h3 className="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
+                <div className="bg-orange-100 p-2 rounded-xl text-orange-500"><ShoppingBag size={24} /></div>
+                Your Order
+              </h3>
+              <button 
+                onClick={() => setIsCartModalOpen(false)}
+                className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold transition-colors"
+              >
+                ✕
+              </button>
+            </div>
             
             <div className="space-y-5 mb-6 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
               {cart.map(item => (
@@ -247,7 +306,7 @@ const CanteenMenu = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

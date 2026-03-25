@@ -9,16 +9,16 @@ const BuyerView = () => {
 
   // Data States
   const [canteens, setCanteens] = useState([]);
-  const [activeOrder, setActiveOrder] = useState(null); 
-  
+  const [activeOrder, setActiveOrder] = useState(null);
+
   // Loading & UI States
   const [loading, setLoading] = useState(true);
-  const [cancelLoading, setCancelLoading] = useState(false); 
+  const [cancelLoading, setCancelLoading] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const checkIsCanteenOpen = (dbIsOpen) => {
     const currentHour = new Date().getHours(); // Gets the hour in 24h format (0-23)
-    const isTimeValid = currentHour >= 9 && currentHour < 22; 
+    const isTimeValid = currentHour >= 9 || currentHour < 2;
     return dbIsOpen && isTimeValid;
   };
 
@@ -33,7 +33,7 @@ const BuyerView = () => {
           if (actualOrder && actualOrder.status && activeStatuses.includes(actualOrder.status)) {
             setActiveOrder(actualOrder);
             setLoading(false);
-            return; 
+            return;
           }
         } catch (err) {
           console.log("No active orders found. Proceeding to grid...");
@@ -48,14 +48,14 @@ const BuyerView = () => {
         setLoading(false);
       }
     };
-    
+
     initializeDashboard();
   }, []);
 
   // --- 2. SEAMLESS NAVIGATION ---
   const handleCanteenClick = (canteen) => {
-    if (!canteen.isOpen) return; 
-    
+    if (!canteen.isOpen) return;
+
     // Instantly navigate to the menu page and pass the basic info for the header
     navigate(`/canteen/${canteen._id}`, {
       state: {
@@ -70,16 +70,16 @@ const BuyerView = () => {
     setCancelLoading(true);
     try {
       await cancelOrder(activeOrder._id);
-      setActiveOrder(null); 
-      setShowCancelModal(false); 
-      
+      setActiveOrder(null);
+      setShowCancelModal(false);
+
       if (canteens.length === 0) {
         const res = await getCanteens();
         setCanteens(Array.isArray(res.data) ? res.data : []);
       }
     } catch (error) {
       alert(error.response?.data?.message || "Failed to cancel the order. It might already be picked up!");
-      setShowCancelModal(false); 
+      setShowCancelModal(false);
     } finally {
       setCancelLoading(false);
     }
@@ -91,33 +91,33 @@ const BuyerView = () => {
   if (activeOrder) {
     return (
       <div className="max-w-3xl mx-auto animate-fade-in space-y-6 relative">
-        
+
         {/*THE NEW CUSTOM CANCEL OVERLAY MODAL */}
         {showCancelModal &&
-        createPortal(
-                <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-                <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-100 p-6 animate-fade-in">
-                    <div className="flex justify-center mb-4">
-                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-50">
-                        <AlertTriangle className="text-red-500" size={22} />
-                    </div>
-                    </div>
-                    <h2 className="text-lg font-semibold text-gray-900 text-center">Cancel Order</h2>
-                    <p className="text-sm text-gray-500 text-center mt-2 leading-relaxed">
-                    Are you sure you want to cancel this order? This action cannot be undone.
-                    </p>
-                    <div className="mt-6 flex flex-col gap-2">
-                    <button onClick={executeCancelOrder} disabled={cancelLoading} className="w-full py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition disabled:opacity-50 disabled:cursor-not-allowed">
-                        {cancelLoading ? "Cancelling..." : "Cancel Order"}
-                    </button>
-                    <button onClick={() => setShowCancelModal(false)} disabled={cancelLoading} className="w-full py-3 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium transition">
-                        Keep Order
-                    </button>
-                    </div>
+          createPortal(
+            <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+              <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-100 p-6 animate-fade-in">
+                <div className="flex justify-center mb-4">
+                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-50">
+                    <AlertTriangle className="text-red-500" size={22} />
+                  </div>
                 </div>
-                </div>,
-                document.body
-            )
+                <h2 className="text-lg font-semibold text-gray-900 text-center">Cancel Order</h2>
+                <p className="text-sm text-gray-500 text-center mt-2 leading-relaxed">
+                  Are you sure you want to cancel this order? This action cannot be undone.
+                </p>
+                <div className="mt-6 flex flex-col gap-2">
+                  <button onClick={executeCancelOrder} disabled={cancelLoading} className="w-full py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    {cancelLoading ? "Cancelling..." : "Cancel Order"}
+                  </button>
+                  <button onClick={() => setShowCancelModal(false)} disabled={cancelLoading} className="w-full py-3 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium transition">
+                    Keep Order
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
         }
 
         {/* ── Animated Status Hero Card ── */}
@@ -126,24 +126,24 @@ const BuyerView = () => {
           const stepIndex = { PENDING: 0, ACCEPTED: 1, PICKED_UP: 2, DELIVERED: 3 }[s] ?? 0;
 
           const steps = [
-            { label: 'Pending',    emoji: '🕐' },
-            { label: 'Accepted',   emoji: '👤' },
+            { label: 'Pending', emoji: '🕐' },
+            { label: 'Accepted', emoji: '👤' },
             { label: 'On the Way', emoji: '🛵' },
-            { label: 'Delivered',  emoji: '🎉' },
+            { label: 'Delivered', emoji: '🎉' },
           ];
 
           const heroBg = {
-            PENDING:   'from-amber-500 to-orange-500',
-            ACCEPTED:  'from-blue-500 to-indigo-600',
+            PENDING: 'from-amber-500 to-orange-500',
+            ACCEPTED: 'from-blue-500 to-indigo-600',
             PICKED_UP: 'from-emerald-500 to-teal-600',
             DELIVERED: 'from-purple-500 to-pink-500',
           }[s] || 'from-gray-700 to-gray-900';
 
           const heroMsg = {
-            PENDING:   { title: 'Looking for a Runner…',  sub: 'Your order is live on the radar.' },
-            ACCEPTED:  { title: 'Runner is on the way!',  sub: "They're heading to the canteen now." },
-            PICKED_UP: { title: 'Food is in route! 🚀',   sub: 'Your runner is heading to you.' },
-            DELIVERED: { title: 'Enjoy your meal! 🎉',    sub: "Hope it's delicious!" },
+            PENDING: { title: 'Looking for a Runner…', sub: 'Your order is live on the radar.' },
+            ACCEPTED: { title: 'Runner is on the way!', sub: "They're heading to the canteen now." },
+            PICKED_UP: { title: 'Food is in route! 🚀', sub: 'Your runner is heading to you.' },
+            DELIVERED: { title: 'Enjoy your meal! 🎉', sub: "Hope it's delicious!" },
           }[s] || { title: 'Processing…', sub: '' };
 
           return (
@@ -162,8 +162,8 @@ const BuyerView = () => {
                 <div className="absolute bottom-4 right-6 w-28 h-28 bg-black/10 rounded-full blur-2xl" />
                 <div className="relative z-10 select-none" style={{ animation: s === 'PICKED_UP' ? 'riderBounce 0.5s ease-in-out infinite alternate' : s === 'PENDING' ? 'float 3s ease-in-out infinite' : 'none' }}>
                   <div className="text-[72px] leading-none drop-shadow-2xl">
-                    {s === 'PENDING'   && '🕐'}
-                    {s === 'ACCEPTED'  && '🏃'}
+                    {s === 'PENDING' && '🕐'}
+                    {s === 'ACCEPTED' && '🏃'}
                     {s === 'PICKED_UP' && '🛵'}
                     {s === 'DELIVERED' && '🎉'}
                   </div>
@@ -178,9 +178,9 @@ const BuyerView = () => {
               <div className="bg-white/10 backdrop-blur-sm px-5 py-4">
                 <div className="flex items-center">
                   {steps.map((step, i) => {
-                    const done    = i < stepIndex;
+                    const done = i < stepIndex;
                     const current = i === stepIndex;
-                    const future  = i > stepIndex;
+                    const future = i > stepIndex;
                     return (
                       <div key={step.label} className="flex items-center flex-1 last:flex-none">
                         <div className="flex flex-col items-center gap-1">
@@ -224,7 +224,7 @@ const BuyerView = () => {
 
         {/* Order Details Receipt */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-          <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><ShoppingBag size={18}/> Order Summary</h3>
+          <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><ShoppingBag size={18} /> Order Summary</h3>
           <div className="space-y-3 mb-4">
             {activeOrder.itemDetails?.items?.map((item, idx) => (
               <div key={idx} className="flex justify-between text-sm">
@@ -257,7 +257,7 @@ const BuyerView = () => {
   // ==========================================
   // VIEW 2: CANTEEN GRID (Loading & Display)
   // ==========================================
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -265,7 +265,7 @@ const BuyerView = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
       {canteens.length === 0 ? (
@@ -276,10 +276,10 @@ const BuyerView = () => {
           const isActuallyOpen = checkIsCanteenOpen(canteen.isOpen);
 
           return (
-            <div 
-              key={canteen._id} 
+            <div
+              key={canteen._id}
               // Only allow clicks if it is ACTUALLY open
-              onClick={() => isActuallyOpen && handleCanteenClick(canteen)} 
+              onClick={() => isActuallyOpen && handleCanteenClick(canteen)}
               className={`bg-white rounded-2xl p-6 border border-gray-100 transition-all ${isActuallyOpen ? 'hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-orange-200' : 'opacity-60 grayscale cursor-not-allowed'}`}
             >
               <div className="flex items-start justify-between mb-4">
@@ -293,7 +293,7 @@ const BuyerView = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-1">{canteen.name}</h3>
               <p className="text-gray-500 text-sm flex items-center gap-1.5 font-medium">
-                <MapPin size={14} className="text-gray-400"/> {canteen.location}
+                <MapPin size={14} className="text-gray-400" /> {canteen.location}
               </p>
             </div>
           );
