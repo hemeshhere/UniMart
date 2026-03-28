@@ -173,7 +173,6 @@ function Hero() {
         {/* Trust bar */}
         <AnimatedSection delay={0.6} className="mt-16 flex flex-wrap items-center justify-center gap-6 sm:gap-10">
           {[
-            { icon: <Star size={14} fill="currentColor" />, text: '4.8 Rating' },
             { icon: <Clock size={14} />, text: '20 Min Avg.' },
             { icon: <ShieldCheck size={14} />, text: 'PIN Secured' },
             { icon: <TrendingUp size={14} />, text: '100% Student Run' },
