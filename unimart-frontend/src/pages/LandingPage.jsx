@@ -1,7 +1,11 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
-import { ShoppingBag, Bike, ShieldCheck, Wallet, RefreshCw, Zap, Instagram, Twitter, Mail, User, Linkedin, Github } from 'lucide-react';
+import {
+  ShoppingBag, Bike, ShieldCheck, Wallet, RefreshCw, Zap,
+  Instagram, Twitter, Mail, User, Linkedin, Github,
+  Star, Clock, ChevronRight, Sparkles, TrendingUp, MapPin
+} from 'lucide-react';
 
 /* ─────────────────── Animation Helpers ─────────────────── */
 const fadeUp = {
@@ -11,7 +15,7 @@ const fadeUp = {
 
 const staggerContainer = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+  visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
 };
 
 function AnimatedSection({ children, className = '', delay = 0 }) {
@@ -34,33 +38,53 @@ function AnimatedSection({ children, className = '', delay = 0 }) {
 /* ─────────────────── Navbar ─────────────────── */
 function Navbar() {
   const navigate = useNavigate();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-sm">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+          ? 'bg-white/95 backdrop-blur-lg shadow-lg border-b border-slate-100'
+          : 'bg-transparent'
+        }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+        {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-            <span className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded-full"></span>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-md shadow-orange-200">
+            <ShoppingBag size={18} className="text-white" strokeWidth={2.5} />
           </div>
-          <span className="font-extrabold text-[#1c2438] text-lg sm:text-xl tracking-tight">
-            Uni<span className="text-orange-500">Mart</span>
+          <span className={`font-extrabold text-xl tracking-tight transition-colors ${scrolled ? 'text-[#1c2438]' : 'text-white'}`}>
+            Uni<span className="text-orange-400">Mart</span>
           </span>
         </div>
+
+        {/* Nav Actions */}
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <button
             onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-            className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors"
+            className={`hidden sm:block text-sm font-semibold transition-colors ${scrolled ? 'text-slate-600 hover:text-orange-500' : 'text-white/80 hover:text-white'
+              }`}
           >
             How it works
           </button>
           <button
             onClick={() => navigate('/login')}
-            className="text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors hidden sm:block ml-4 border-l border-slate-200 pl-4"
+            className={`text-sm font-semibold transition-all hidden sm:block ml-2 pl-4 border-l ${scrolled
+                ? 'text-slate-600 hover:text-orange-500 border-slate-200'
+                : 'text-white/80 hover:text-white border-white/20'
+              }`}
           >
             Log In
           </button>
           <button
             onClick={() => navigate('/login', { state: { defaultMode: 'REGISTER' } })}
-            className="text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-orange-500 text-white shadow-md hover:shadow-lg hover:bg-orange-600 transition-all duration-300 whitespace-nowrap"
+            className="text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:scale-105 transition-all duration-300 whitespace-nowrap"
           >
             Get Started
           </button>
@@ -73,50 +97,140 @@ function Navbar() {
 /* ─────────────────── Hero Section ─────────────────── */
 function Hero() {
   const navigate = useNavigate();
+  const foodEmojis = ['🍕', '🍔', '🌮', '🍜', '☕', '🧆', '🍱', '🥗'];
 
   return (
-    <section className="relative pt-28 pb-16 lg:pt-48 lg:pb-32 overflow-hidden bg-white">
-      {/* High contrast minimal background */}
-      <div className="hidden md:block absolute top-0 right-0 w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-[#fafbfc] rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+      {/* Dark gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0f0f0f] via-[#1a1208] to-[#1c1515]" />
 
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10 flex flex-col items-center text-center">
+      {/* Glows */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-red-500/5 rounded-full blur-[100px] pointer-events-none" />
 
+      {/* Floating food emojis */}
+      <div className="absolute top-0 left-0 right-0 h-full overflow-hidden pointer-events-none select-none">
+        {foodEmojis.map((emoji, i) => (
+          <motion.span
+            key={i}
+            className="absolute text-4xl opacity-10"
+            style={{ left: `${10 + i * 12}%`, top: `${15 + (i % 3) * 20}%` }}
+            animate={{ y: [0, -20, 0], rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 4 + i * 0.5, repeat: Infinity, delay: i * 0.3 }}
+          >
+            {emoji}
+          </motion.span>
+        ))}
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 text-center pt-28 pb-20">
+        {/* Badge */}
         <AnimatedSection delay={0.1}>
-          <div className="inline-flex flex-wrap justify-center items-center gap-2 bg-orange-50 px-4 py-2 rounded-full font-bold text-xs sm:text-sm text-orange-600 mb-8 border border-orange-100">
-            <span className="flex items-center gap-1"><Zap size={16} /> 20-Min Campus Delivery</span>
-            <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-orange-300 mx-1"></span>
-
+          <div className="inline-flex items-center gap-2 bg-orange-500/15 border border-orange-500/30 px-4 py-2 rounded-full mb-8">
+            <Zap size={14} className="text-orange-400" fill="currentColor" />
+            <span className="text-orange-300 text-sm font-bold tracking-wide">CAMPUS-EXCLUSIVE · 20 MIN DELIVERY</span>
           </div>
         </AnimatedSection>
 
+        {/* Headline */}
         <AnimatedSection delay={0.2}>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#1c2438] leading-tight tracking-tight max-w-4xl mx-auto">
-            The Campus <span className="text-orange-500">Food Network.</span>
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[1.05] tracking-tight">
+            Your Campus.
+            <br />
+            <span className="bg-gradient-to-r from-orange-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
+              Your Food.
+            </span>
+            <br />
+            <span className="text-white/70 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold">Delivered Fast.</span>
           </h1>
         </AnimatedSection>
 
+        {/* Sub-text */}
         <AnimatedSection delay={0.3}>
-          <p className="mt-8 text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            Order food to your desk, or turn your walk to class into cash.
-            A peer-to-peer delivery ecosystem powered exclusively by students.
+          <p className="mt-8 text-lg sm:text-xl text-white/50 max-w-2xl mx-auto leading-relaxed font-medium">
+            Any student can be a Buyer. Any student can be a Runner. Switch between ordering food and delivering food instantly through a single dashboard toggle
           </p>
         </AnimatedSection>
 
-        <AnimatedSection delay={0.4} className="mt-12 w-full max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center gap-4">
-          <button
+        {/* CTA Buttons */}
+        <AnimatedSection delay={0.4} className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
             onClick={() => navigate('/login')}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-xl sm:rounded-full bg-orange-500 text-white font-bold text-base sm:text-lg shadow-lg hover:bg-orange-600 transition-all active:scale-95"
+            className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-lg shadow-2xl shadow-orange-500/30 hover:shadow-orange-500/50 transition-all"
           >
-            <ShoppingBag size={20} /> Order Now
-          </button>
-          <button
+            <ShoppingBag size={22} /> Order Now <ChevronRight size={18} />
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
             onClick={() => navigate('/login', { state: { defaultMode: 'REGISTER' } })}
-            className="mt-4 sm:mt-0 w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-xl sm:rounded-full bg-[#1c2438] text-white font-bold text-base sm:text-lg shadow-lg hover:bg-[#2c3854] transition-all active:scale-95"
+            className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white font-bold text-lg hover:bg-white/15 transition-all"
           >
-            <Bike size={20} className="text-orange-400" /> Start Earning
-          </button>
+            <Bike size={22} className="text-orange-400" /> Start Earning
+          </motion.button>
         </AnimatedSection>
 
+        {/* Trust bar */}
+        <AnimatedSection delay={0.6} className="mt-16 flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+          {[
+            { icon: <Star size={14} fill="currentColor" />, text: '4.8 Rating' },
+            { icon: <Clock size={14} />, text: '20 Min Avg.' },
+            { icon: <ShieldCheck size={14} />, text: 'PIN Secured' },
+            { icon: <TrendingUp size={14} />, text: '100% Student Run' },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-2 text-white/50 text-sm font-semibold">
+              <span className="text-orange-400">{item.icon}</span>
+              {item.text}
+            </div>
+          ))}
+        </AnimatedSection>
+      </div>
+
+      {/* Bottom wave — display:block removes the inline baseline gap that causes the hairline */}
+      <div className="absolute bottom-0 left-0 right-0 leading-none overflow-hidden">
+        <svg viewBox="0 0 1440 80" className="w-full" preserveAspectRatio="none" style={{ display: 'block' }}>
+          <path d="M0,80 C360,0 1080,80 1440,20 L1440,80 L0,80 Z" fill="#f8f9fb" />
+        </svg>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────── Category Strip ─────────────────── */
+function CategoryStrip() {
+  const categories = [
+    { icon: '🍕', label: 'Pizza' },
+    { icon: '🥗', label: 'Healthy' },
+    { icon: '☕', label: 'Beverages' },
+    { icon: '🍔', label: 'Burgers' },
+    { icon: '🍜', label: 'Noodles' },
+    { icon: '🧆', label: 'Snacks' },
+    { icon: '🍱', label: 'Rice Bowls' },
+    { icon: '🌮', label: 'Wraps' },
+  ];
+
+  return (
+    <section className="py-12 bg-[#f8f9fb]">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8">
+        <AnimatedSection className="text-center mb-8">
+          <p className="text-sm font-bold text-orange-500 tracking-widest uppercase mb-2">What's on the menu</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-[#1c2438]">Order from your Canteen</h2>
+        </AnimatedSection>
+        <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scrollbar-hide justify-start sm:justify-center flex-nowrap">
+          {categories.map((cat, i) => (
+            <motion.div
+              key={i}
+              whileHover={{ y: -6, scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex flex-col items-center gap-3 cursor-pointer shrink-0"
+            >
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white shadow-md shadow-slate-100 border border-slate-100 flex items-center justify-center text-3xl sm:text-4xl hover:shadow-lg hover:border-orange-200 transition-all">
+                {cat.icon}
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-slate-600">{cat.label}</span>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -126,36 +240,46 @@ function Hero() {
 function JourneyMap() {
   const steps = [
     {
-      title: "Order & Broadcast",
-      desc: "User orders on the platform → The request instantly appears on the live Runner Dashboard."
+      emoji: '🛒',
+      title: 'Order & Broadcast',
+      desc: 'User orders on the platform → The request instantly appears on the live Runner Dashboard.',
+      color: 'from-orange-400 to-orange-600',
     },
     {
-      title: "The Acceptance",
-      desc: "A nearby Runner clicks 'Accept' (Runner must maintain > ₹20 in their secure wallet)."
+      emoji: '✋',
+      title: 'The Acceptance',
+      desc: 'A nearby Runner clicks "Accept" (Runner must maintain > ₹10 in their secure wallet).',
+      color: 'from-blue-400 to-blue-600',
     },
     {
-      title: "The Security Pin",
-      desc: "A unique, secure 4-digit PIN is immediately generated after the runner picks up the order and shown only to the User."
+      emoji: '🔐',
+      title: 'The Security Pin',
+      desc: 'A unique, secure 4-digit PIN is generated after pick-up and shown only to the User.',
+      color: 'from-violet-400 to-violet-600',
     },
     {
-      title: "The Exchange",
-      desc: "Runner arrives with the food → User provides the PIN → Runner enters PIN in-app to verify."
+      emoji: '🤝',
+      title: 'The Exchange',
+      desc: 'Runner arrives with food → User provides the PIN → Runner enters PIN in-app to verify.',
+      color: 'from-emerald-400 to-emerald-600',
     },
     {
-      title: "The Payoff",
-      desc: "Transaction completes! Runner gets paid instantly → User enjoys their food."
-    }
+      emoji: '💸',
+      title: 'The Payoff',
+      desc: 'PIN verified! User pays the runner directly — Cash or UPI — right there at handoff. Instant, no middleman.',
+      color: 'from-pink-400 to-red-500',
+    },
   ];
 
   return (
-    <section id="how-it-works" className="py-20 bg-[#fafbfc] relative border-t border-slate-200">
-      <div className="max-w-4xl mx-auto px-5 sm:px-8">
-
-        <AnimatedSection className="text-center mb-12 flex flex-col items-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1c2438]">
+    <section id="how-it-works" className="py-24 bg-white relative">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8">
+        <AnimatedSection className="text-center mb-16">
+          <p className="text-sm font-bold text-orange-500 tracking-widest uppercase mb-3">Simple & Secure</p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1c2438]">
             The Pin-Verify Flow
           </h2>
-          <p className="mt-4 text-slate-500 text-lg sm:text-xl">
+          <p className="mt-4 text-slate-500 text-lg max-w-xl mx-auto">
             Secure, student-to-student handoffs in 5 simple steps.
           </p>
         </AnimatedSection>
@@ -164,35 +288,60 @@ function JourneyMap() {
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          className="relative"
+          viewport={{ once: true, margin: '-50px' }}
+          className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4"
         >
-          {/* Vertical Track Line for Desktop */}
-          <div className="hidden md:block absolute left-8 top-8 bottom-8 w-1 bg-orange-100 rounded-full"></div>
-
-          <div className="space-y-6 md:space-y-8 relative z-10">
-            {steps.map((step, index) => (
-              <motion.div
-                key={index}
-                variants={fadeUp}
-                className="flex flex-row items-start md:items-center gap-4 md:gap-8 bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 relative"
-              >
-                {/* Number Badge */}
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-orange-500 text-white font-black text-lg md:text-xl flex items-center justify-center shrink-0 shadow-md">
-                  {index + 1}
+          {steps.map((step, index) => (
+            <motion.div
+              key={index}
+              variants={fadeUp}
+              className="relative bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:shadow-slate-100 transition-all duration-300 group flex flex-col items-center text-center"
+            >
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center text-2xl shadow-lg mb-5 group-hover:scale-110 transition-transform`}>
+                {step.emoji}
+              </div>
+              <span className="absolute top-4 right-4 w-6 h-6 rounded-full bg-slate-100 text-slate-400 text-xs font-black flex items-center justify-center">
+                {index + 1}
+              </span>
+              <h3 className="text-base font-extrabold text-[#1c2438] mb-2">{step.title}</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
+              {index < steps.length - 1 && (
+                <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 z-10">
+                  <ChevronRight size={20} className="text-orange-300" />
                 </div>
-
-                <div>
-                  <h3 className="text-xl font-bold text-[#1c2438] mb-2">{step.title}</h3>
-                  <p className="text-slate-600 leading-relaxed font-medium">
-                    {step.desc}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+              )}
+            </motion.div>
+          ))}
         </motion.div>
+      </div>
+    </section>
+  );
+}
 
+/* ─────────────────── Stats Row ─────────────────── */
+function StatsRow() {
+  const stats = [
+    { value: '₹20', label: 'Min. Runner Deposit', icon: <Wallet size={20} className="text-orange-500" /> },
+    { value: '₹5', label: 'Flat Platform Fee', icon: <RefreshCw size={20} className="text-emerald-500" /> },
+    { value: '100%', label: 'Earnings Kept', icon: <TrendingUp size={20} className="text-blue-500" /> },
+    { value: '4-digit', label: 'PIN Security', icon: <ShieldCheck size={20} className="text-violet-500" /> },
+  ];
+  return (
+    <section className="py-16 bg-[#f8f9fb]">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {stats.map((s, i) => (
+            <AnimatedSection key={i} delay={i * 0.1}>
+              <div className="bg-white rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  {s.icon}
+                </div>
+                <div className="text-3xl sm:text-4xl font-black text-[#1c2438] mb-1">{s.value}</div>
+                <div className="text-xs sm:text-sm text-slate-500 font-semibold">{s.label}</div>
+              </div>
+            </AnimatedSection>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -203,77 +352,90 @@ function RunnerWalletEconomy() {
   return (
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
 
           <AnimatedSection>
-            <div className="inline-flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full font-bold text-sm text-slate-700 mb-6">
-              <Wallet size={16} className="text-orange-500" /> Earn With Us
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1c2438] mb-6">
-              The Runner Economy.
+            <p className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-4">Runner Economy</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#1c2438] leading-tight mb-4">
+              Fair pay,<br />every delivery.
             </h2>
-            <p className="text-lg text-slate-500 mb-8 leading-relaxed">
-              We built a sustainable, micro-transaction wallet system that ensures fair pay and platform reliability.
+            <p className="text-base text-slate-400 mb-12 leading-relaxed max-w-sm">
+              A transparent wallet system that keeps the platform sustainable while runners keep every rupee they earn.
             </p>
 
-            <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                  <span className="text-emerald-700 font-bold text-lg">₹20</span>
+            <div className="space-y-8">
+              {[
+                {
+                  badge: '₹20', badgeColor: 'text-emerald-600',
+                  title: 'Low Entry Barrier',
+                  desc: 'Start accepting orders with just a ₹20 minimum top-up in your Runner Wallet.',
+                },
+                {
+                  badge: '₹5', badgeColor: 'text-orange-500',
+                  title: 'The Fuel System',
+                  desc: 'A flat ₹5 platform fee is deducted per successful delivery — transparent, every time.',
+                },
+                {
+                  badge: '100%', badgeColor: 'text-blue-600',
+                  title: 'You Keep the Rest',
+                  desc: 'All delivery earnings go directly to you. Top up when your balance hits the minimum to stay active.',
+                },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-5 group">
+                  <div className="w-px self-stretch bg-slate-100 group-hover:bg-orange-300 transition-colors shrink-0 ml-1" />
+                  <div className="pb-2">
+                    <span className={`text-xs font-black uppercase tracking-widest ${item.badgeColor} mb-1 block`}>{item.badge}</span>
+                    <h4 className="text-sm font-bold text-[#1c2438] mb-1">{item.title}</h4>
+                    <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-lg font-bold text-[#1c2438]">Low Entry Barrier</h4>
-                  <p className="text-slate-500 mt-1">Start accepting orders immediately with just a minimum ₹20 top-up in your Runner Wallet.</p>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                  <span className="text-orange-600 font-bold text-lg">₹5</span>
-                </div>
-                <div>
-                  <h4 className="text-lg font-bold text-[#1c2438]">The "Fuel" System</h4>
-                  <p className="text-slate-500 mt-1">A flat ₹5 is automatically deducted from your wallet per successful delivery as a platform maintenance fee.</p>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                  <RefreshCw size={20} className="text-amber-600" />
-                </div>
-                <div>
-                  <h4 className="text-lg font-bold text-[#1c2438]">Sustainable Looping</h4>
-                  <p className="text-slate-500 mt-1">Keep 100% of your delivery earnings. Just remember to top up once you hit the minimum threshold to stay active on the dashboard.</p>
-                </div>
-              </div>
+              ))}
             </div>
           </AnimatedSection>
 
-          <AnimatedSection delay={0.2} className="relative">
-            <div className="aspect-square bg-[#1c2438] rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden flex flex-col justify-center">
-              <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full"></div>
+          {/* Wallet Card — clean dark */}
+          <AnimatedSection delay={0.18}>
+            <div className="bg-[#111827] rounded-3xl p-8 sm:p-10 shadow-xl border border-white/5">
 
-              <div className="relative z-10 text-center text-white">
-                <Wallet size={48} className="mx-auto mb-4 md:mb-6 text-orange-400" />
-                <h3 className="text-xl md:text-2xl font-bold mb-2">My Wallet</h3>
-                <div className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-linear-to-br from-white to-orange-200 mb-4">
-                  ₹155.00
+              {/* Header */}
+              <div className="flex items-center justify-between mb-10">
+                <div>
+                  <p className="text-slate-500 text-xs uppercase tracking-widest font-semibold">Runner Wallet</p>
+                  <p className="text-white/25 text-xs font-mono mt-1">Ashmit C.</p>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full font-bold text-sm">
-                  <ShieldCheck size={16} /> Active Status
-                </div>
-
-                <div className="mt-8 pt-8 border-t border-slate-700/50 flex justify-between items-center text-left">
-                  <div>
-                    <div className="text-slate-400 text-sm mb-1">Recent Trip</div>
-                    <div className="font-bold">+ ₹30.00</div>
-                  </div>
-                  <div>
-                    <div className="text-slate-400 text-sm mb-1">Platform Fee</div>
-                    <div className="font-bold text-rose-400">- ₹5.00</div>
-                  </div>
+                <div className="w-9 h-9 rounded-xl bg-orange-500/15 flex items-center justify-center">
+                  <Wallet size={16} className="text-orange-400" />
                 </div>
               </div>
+
+              {/* Balance */}
+              <div className="mb-3">
+                <p className="text-slate-600 text-[10px] font-semibold uppercase tracking-widest mb-2">Available Balance</p>
+                <p className="text-white font-black text-6xl tracking-tight leading-none">
+                  ₹155<span className="text-slate-600 text-2xl font-bold">.00</span>
+                </p>
+              </div>
+
+              {/* Status */}
+              <div className="flex items-center gap-2 mb-10 mt-5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-emerald-400 text-xs font-semibold">Active · Accepting Orders</span>
+              </div>
+
+              {/* Transactions */}
+              <div className="border-t border-white/5 pt-6 space-y-4">
+                {[
+                  { label: 'Delivered – Canteen A', amount: '+₹30', pos: true },
+                  { label: 'Platform Fee', amount: '-₹5', pos: false },
+                  { label: 'Delivered – Library Café', amount: '+₹40', pos: true },
+                ].map((tx, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="text-slate-500 text-xs">{tx.label}</span>
+                    <span className={`text-xs font-bold ${tx.pos ? 'text-emerald-400' : 'text-red-400'}`}>{tx.amount}</span>
+                  </div>
+                ))}
+              </div>
+
             </div>
           </AnimatedSection>
 
@@ -288,23 +450,48 @@ function DualRole() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-16 md:py-24 bg-orange-500 text-white text-center px-5 relative overflow-hidden">
-      <div className="max-w-4xl mx-auto relative z-10 flex flex-col items-center">
+    <section className="py-20 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-orange-600 to-red-600" />
+      <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl" />
+
+      <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-8 text-center">
         <AnimatedSection>
-          <RefreshCw size={48} className="mx-auto mb-8 text-orange-200" />
-          <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+              <ShoppingBag size={28} className="text-white" />
+            </div>
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+              <RefreshCw size={16} className="text-white" />
+            </div>
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+              <Bike size={28} className="text-white" />
+            </div>
+          </div>
+
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6 leading-tight">
             One Account.<br />Two Ways to Campus.
           </h2>
-          <p className="text-lg md:text-xl text-orange-100 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
-            Any student can be a Buyer. Any student can be a Runner.
-            Switch between ordering food and delivering food instantly through a single dashboard toggle.
+          <p className="text-lg sm:text-xl text-orange-100 max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
+            Order from your college canteen right to your desk — or become a runner and turn your free time into real cash. Peer-to-peer, student-powered.
           </p>
-          <button
-            onClick={() => navigate('/login', { state: { defaultMode: 'REGISTER' } })}
-            className="w-full sm:w-auto px-8 py-4 rounded-xl sm:rounded-full bg-white text-orange-500 font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95"
-          >
-            Create Your Account
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <motion.button
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/login', { state: { defaultMode: 'REGISTER' } })}
+              className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-white text-orange-600 font-black text-lg shadow-2xl hover:shadow-white/20 transition-all"
+            >
+              Create Your Account
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/login')}
+              className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-white/10 backdrop-blur-sm border-2 border-white/40 text-white font-bold text-lg hover:bg-white/20 transition-all"
+            >
+              Log In
+            </motion.button>
+          </div>
         </AnimatedSection>
       </div>
     </section>
@@ -314,40 +501,40 @@ function DualRole() {
 /* ─────────────────── Info Modal ─────────────────── */
 const MODAL_DATA = {
   'runner-economy': {
-    title: "Runner Economy & Wallet",
-    content: "The Runner Wallet manages micro-transactions to keep the platform sustainable. Runners can top up securely. A flat fee of ₹5 per successful delivery ensures the platform remains high-quality, while runners retain 100% of the actual delivery charges paid by the buyer."
+    title: 'Runner Economy & Wallet',
+    content: 'The Runner Wallet manages micro-transactions to keep the platform sustainable. Runners can top up securely. A flat fee of ₹5 per successful delivery ensures the platform remains high-quality, while runners retain 100% of the actual delivery charges paid by the buyer.',
   },
   'security-details': {
-    title: "End-to-End Security",
-    content: "UniMart focuses on a 100% secure student ecosystem. Every delivery utilizes our proprietary Pin-Verify flow. The buyer receives a unique 4-digit PIN upon order placement. The runner cannot claim payment until this PIN is entered into the app during handoff."
+    title: 'End-to-End Security',
+    content: 'UniMart focuses on a 100% secure student ecosystem. Every delivery utilizes our proprietary Pin-Verify flow. The buyer receives a unique 4-digit PIN upon order placement. The runner cannot claim payment until this PIN is entered into the app during handoff.',
   },
   'pricing': {
-    title: "Transparent Pricing",
-    content: "There are zero hidden fees for buyers—what you see is what you pay. For runners, the app deducts a transparent ₹5 operational fee per successfully verified delivery. No subscriptions or hidden surcharges."
+    title: 'Transparent Pricing',
+    content: 'There are zero hidden fees for buyers—what you see is what you pay. For runners, the app deducts a transparent ₹5 operational fee per successfully verified delivery. No subscriptions or hidden surcharges.',
   },
   'privacy': {
-    title: "Privacy Policy",
-    content: "Access is strictly restricted to verified university students. We do not sell your data. Location details are only shared temporarily while an active delivery is in progress, and automatically wiped afterwards."
+    title: 'Privacy Policy',
+    content: 'Access is strictly restricted to verified university students. We do not sell your data. Location details are only shared temporarily while an active delivery is in progress, and automatically wiped afterwards.',
   },
   'terms': {
-    title: "Terms of Service",
-    content: "By using UniMart, you agree to respect your fellow students. Fraudulent orders or failing to deliver accepted orders will result in a permanent ban from the platform. Maintain your minimum runner balance to stay active."
+    title: 'Terms of Service',
+    content: 'By using UniMart, you agree to respect your fellow students. Fraudulent orders or failing to deliver accepted orders will result in a permanent ban from the platform. Maintain your minimum runner balance to stay active.',
   },
   'help': {
-    title: "Help Center",
-    content: "Having issues with an order? Check the 'Orders' tab in your dashboard to dispute a charge or contact the campus administrator. For app bugs, please provide a screenshot to our support team."
+    title: 'Help Center',
+    content: "Having issues with an order? Check the 'Orders' tab in your dashboard to dispute a charge or contact the campus administrator. For app bugs, please provide a screenshot to our support team.",
   },
   'contact': {
-    title: "Contact Us",
-    content: "We are proudly built by students for students. Reach out directly to the UniMart core team at support@unimart.campus or visit us in the CS Building Lab during office hours."
+    title: 'Contact Us',
+    content: 'We are proudly built by students for students. Reach out directly to the UniMart core team at support@unimart.campus or visit us in the CS Building Lab during office hours.',
   },
   'developer': {
-    title: "Meet the Developers",
+    title: 'Meet the Developers',
     customContent: (
       <div className="grid lg:grid-cols-2 gap-6 items-stretch pt-2 pb-2">
         {/* Ashmit card */}
         <div className="bg-[#1c2438] rounded-4xl overflow-hidden shadow-xl flex flex-col sm:flex-row relative group hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-300 border border-slate-700">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
           <div className="sm:w-[45%] h-64 sm:h-auto bg-[#101524] flex items-center justify-center shrink-0 border-r border-[#2c3854]">
             <User size={80} className="text-[#2c3854] group-hover:text-orange-400 transition-colors duration-500" />
           </div>
@@ -367,7 +554,7 @@ const MODAL_DATA = {
               <a href="https://www.linkedin.com/in/ashmitchoudhary/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-[#0077b5] hover:border-[#0077b5] hover:text-white transition-all hover:-translate-y-1">
                 <Linkedin size={18} />
               </a>
-              <a href="https://www.instagram.com/ashmit_choudharyy" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:border-transparent hover:text-white hover:bg-linear-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] transition-all hover:-translate-y-1">
+              <a href="https://www.instagram.com/ashmit_choudharyy" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:border-transparent hover:text-white hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] transition-all hover:-translate-y-1">
                 <Instagram size={18} />
               </a>
             </div>
@@ -376,7 +563,7 @@ const MODAL_DATA = {
 
         {/* Hemesh card */}
         <div className="bg-[#1c2438] rounded-4xl overflow-hidden shadow-xl flex flex-col sm:flex-row relative group hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-300 border border-slate-700">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
           <div className="sm:w-[45%] h-64 sm:h-auto bg-[#101524] flex items-center justify-center shrink-0 border-r border-[#2c3854]">
             <User size={80} className="text-[#2c3854] group-hover:text-orange-400 transition-colors duration-500" />
           </div>
@@ -390,21 +577,21 @@ const MODAL_DATA = {
               "Building the future of campus delivery, one commit at a time."
             </div>
             <div className="flex gap-4 mt-auto">
-              <a href="https://github.com/hemeshhere" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-[#2dba4e] hover:border-[#2dba4e] hover:text-white transition-all hover:-translate-y-1">
+              <a href="https://github.com/hemeshhere" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-[#2dba4e] hover:border-[#2dba4e] hover:text-white transition-all hover:-translate-y-1">
                 <Github size={18} />
               </a>
-              <a href="https://www.linkedin.com/in/hemeshhere/" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-[#0077b5] hover:border-[#0077b5] hover:text-white transition-all hover:-translate-y-1">
+              <a href="https://www.linkedin.com/in/hemeshhere/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-[#0077b5] hover:border-[#0077b5] hover:text-white transition-all hover:-translate-y-1">
                 <Linkedin size={18} />
               </a>
-              <a href="https://www.instagram.com/himessshh/" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:border-transparent hover:text-white hover:bg-linear-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] transition-all hover:-translate-y-1">
+              <a href="https://www.instagram.com/himessshh/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:border-transparent hover:text-white hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] transition-all hover:-translate-y-1">
                 <Instagram size={18} />
               </a>
             </div>
           </div>
         </div>
       </div>
-    )
-  }
+    ),
+  },
 };
 
 function InfoModal({ type, onClose }) {
@@ -412,7 +599,7 @@ function InfoModal({ type, onClose }) {
   const { title, content, customContent } = MODAL_DATA[type];
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-5 bg-[#1c2438]/80 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-[#1c2438]/80 backdrop-blur-md" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -428,14 +615,8 @@ function InfoModal({ type, onClose }) {
         </button>
         <h3 className="text-3xl font-extrabold text-[#1c2438] mb-6 pr-8 leading-tight">{title}</h3>
 
-        {content && (
-          <p className="text-slate-600 text-lg leading-relaxed font-medium">
-            {content}
-          </p>
-        )}
-
+        {content && <p className="text-slate-600 text-lg leading-relaxed font-medium">{content}</p>}
         {customContent && customContent}
-
         {!customContent && (
           <div className="mt-10">
             <button onClick={onClose} className="w-full py-4 bg-[#1c2438] hover:bg-orange-500 text-white rounded-xl font-bold text-lg shadow-lg transition-all active:scale-95">
@@ -451,40 +632,39 @@ function InfoModal({ type, onClose }) {
 /* ─────────────────── Footer ─────────────────── */
 function Footer({ onOpenModal }) {
   return (
-    <footer className="bg-[#1c2438] pt-20 pb-10 border-t border-[#2c3854]">
+    <footer className="bg-[#0f1520] pt-20 pb-10 border-t border-[#1c2438]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
 
-        {/* Main Columns Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 lg:gap-8 mb-16 text-slate-300">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 lg:gap-8 mb-16 text-slate-400">
 
           {/* Brand Col */}
           <div className="sm:col-span-2 md:col-span-2">
             <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                <span className="w-4 h-4 bg-orange-500 rounded-full"></span>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <ShoppingBag size={18} className="text-white" />
               </div>
               <span className="font-extrabold text-white text-2xl tracking-tight">
-                Uni<span className="text-orange-500">Mart</span>
+                Uni<span className="text-orange-400">Mart</span>
               </span>
             </div>
-            <p className="text-slate-400 text-base leading-relaxed max-w-sm mb-8">
+            <p className="text-slate-500 text-base leading-relaxed max-w-sm mb-8">
               Revolutionizing campus dining through peer-to-peer delivery.
               By students, for students. Fast, affordable, and community-driven.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-[#2c3854] flex items-center justify-center text-slate-300 hover:bg-orange-500 hover:text-white transition-all hover:-translate-y-1">
+              <a href="#" className="w-10 h-10 rounded-full bg-[#1c2438] flex items-center justify-center text-slate-400 hover:bg-orange-500 hover:text-white transition-all hover:-translate-y-1">
                 <Instagram size={18} />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-[#2c3854] flex items-center justify-center text-slate-300 hover:bg-orange-500 hover:text-white transition-all hover:-translate-y-1">
+              <a href="#" className="w-10 h-10 rounded-full bg-[#1c2438] flex items-center justify-center text-slate-400 hover:bg-orange-500 hover:text-white transition-all hover:-translate-y-1">
                 <Twitter size={18} />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-[#2c3854] flex items-center justify-center text-slate-300 hover:bg-orange-500 hover:text-white transition-all hover:-translate-y-1">
+              <a href="#" className="w-10 h-10 rounded-full bg-[#1c2438] flex items-center justify-center text-slate-400 hover:bg-orange-500 hover:text-white transition-all hover:-translate-y-1">
                 <Mail size={18} />
               </a>
             </div>
           </div>
 
-          {/* Links Col 1 */}
+          {/* Platform Links */}
           <div>
             <h4 className="text-white font-bold mb-6 text-lg">Platform</h4>
             <ul className="space-y-4">
@@ -495,7 +675,7 @@ function Footer({ onOpenModal }) {
             </ul>
           </div>
 
-          {/* Links Col 2 */}
+          {/* Legal Links */}
           <div>
             <h4 className="text-white font-bold mb-6 text-lg">Legal & Help</h4>
             <ul className="space-y-4">
@@ -509,12 +689,12 @@ function Footer({ onOpenModal }) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-[#2c3854] flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="pt-8 border-t border-[#1c2438] flex flex-col md:flex-row items-center justify-between gap-6">
           <p className="text-slate-500 text-sm">
             © {new Date().getFullYear()} UniMart Technologies. All rights reserved.
           </p>
           <button onClick={() => onOpenModal('developer')} className="text-sm font-bold text-orange-500 hover:text-orange-400 transition-colors flex items-center gap-2">
-            <User size={16} /> Know the Developers
+            <Sparkles size={16} /> Know the Developers
           </button>
         </div>
 
@@ -528,10 +708,12 @@ export default function LandingPage() {
   const [activeModal, setActiveModal] = useState(null);
 
   return (
-    <div className="font-sans min-h-screen bg-[#fafbfc] selection:bg-orange-100 selection:text-orange-900 w-full max-w-[100vw] overflow-x-hidden relative">
+    <div className="font-sans min-h-screen bg-[#f8f9fb] selection:bg-orange-100 selection:text-orange-900 w-full max-w-[100vw] overflow-x-hidden relative">
       <Navbar />
       <Hero />
+      <CategoryStrip />
       <JourneyMap />
+      <StatsRow />
       <RunnerWalletEconomy />
       <DualRole />
       <Footer onOpenModal={setActiveModal} />
