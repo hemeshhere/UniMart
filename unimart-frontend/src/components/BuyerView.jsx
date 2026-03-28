@@ -16,7 +16,7 @@ const BuyerView = ({ onLock }) => {
 
   const checkIsCanteenOpen = (dbIsOpen) => {
     const currentHour = new Date().getHours(); // Gets the hour in 24h format (0-23)
-    const isTimeValid = currentHour >= 9 && currentHour < 22;
+    const isTimeValid = currentHour >= 9 || currentHour < 4;
     return dbIsOpen && isTimeValid;
   };
 
@@ -239,6 +239,34 @@ const BuyerView = ({ onLock }) => {
             </div>
           </div>
         </div>
+
+        {/* ── Runner Contact Card ── */}
+        {activeOrder.runnerId && (activeOrder.status === 'ACCEPTED' || activeOrder.status === 'PICKED_UP') && (
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold">
+                {activeOrder.runnerId.name?.charAt(0)}
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Your Runner</p>
+                <p className="font-bold text-gray-900">{activeOrder.runnerId.name}</p>
+              </div>
+            </div>
+            
+            {/* 📞 Call Button */}
+            {activeOrder.runnerId.phoneNumber && (
+              <a
+                href={`tel:${activeOrder.runnerId.phoneNumber}`}
+                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg shadow-green-100"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                </svg>
+                Call
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Actions Container */}
         <div className="flex flex-col gap-2">

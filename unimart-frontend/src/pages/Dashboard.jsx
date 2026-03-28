@@ -257,7 +257,7 @@ const Dashboard = () => {
           <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center shadow-sm shadow-orange-200">
             <span className="text-white font-black text-xs">U</span>
           </div>
-          <span className="font-bold tracking-tight">UniMart</span>
+          <span className="font-bold tracking-tight">TheUniMart</span>
         </div>
 
         <button
@@ -278,7 +278,7 @@ const Dashboard = () => {
               <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-sm shadow-orange-200">
                 <span className="text-white font-black text-xl">U</span>
               </div>
-              <span className="font-bold text-2xl tracking-tight">UniMart</span>
+              <span className="font-bold text-2xl tracking-tight">TheUniMart</span>
             </div>
             <div className="h-6 w-px bg-gray-200"></div>
             <p className="text-sm font-medium text-gray-500">Welcome, <span className="text-gray-900 font-bold">{user?.name?.split(' ')[0]}</span></p>

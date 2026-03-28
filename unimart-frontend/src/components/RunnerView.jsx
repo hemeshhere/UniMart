@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { io } from "socket.io-client";
 import {
   Zap, Package, MapPin, DollarSign, Clock, CheckCircle,
   AlertTriangle, RefreshCw, Bike, ShieldCheck, XCircle, Loader
@@ -260,6 +261,35 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
         </div>
       </div>
 
+      {/* ── Buyer Contact Card ── */}
+      {mission.buyerId && (
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="flex items-center gap-3">
+            {/* Buyer Avatar (Orange theme to match the Buyer's view) */}
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-black text-lg">
+              {mission.buyerId.name?.charAt(0)}
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Delivery To</p>
+              <p className="font-bold text-gray-900 leading-tight">{mission.buyerId.name}</p>
+            </div>
+          </div>
+          
+          {/* 📞 Call Button (Matches Buyer's Green Style) */}
+          {mission.buyerId.phoneNumber && (
+            <a
+              href={`tel:${mission.buyerId.phoneNumber}`}
+              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg shadow-green-100"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+              </svg>
+              Call
+            </a>
+          )}
+        </div>
+      )}
+
       {/* Action Buttons */}
       {mission.status === 'ACCEPTED' && (
         <button
@@ -352,6 +382,44 @@ const RunnerView = ({ onLock }) => {
   const activeMission = (missionRes?.hasActiveMission && missionRes?.data) ? missionRes.data : null;
   const pendingOrders = Array.isArray(tasksRes?.data) ? tasksRes.data : [];
   const fetchLoading = missionLoading || (tasksLoading && !tasksRes);
+
+  // Socket LISTENER 
+  useEffect(() => {
+    // 1. Connect to the WebSocket
+    const backendUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const socket = io(backendUrl);
+    // 2. Join the Radar Room
+    socket.emit('join_runners_room');
+    // 3. Listen for New Orders
+    socket.on('new_order_alert', (newOrder) => {
+      console.log("NEW ORDER ON RADAR:", newOrder._id);
+      
+      // Instantly inject the new order into React Query's cache without refreshing!
+      queryClient.setQueryData(['availableTasks'], (oldData) => {
+        if (!oldData) return { data: [newOrder] };
+        const oldTasks = Array.isArray(oldData.data) ? oldData.data : [];
+        // Prevent duplicates
+        if (oldTasks.some(o => o._id === newOrder._id)) return oldData;
+        
+        return { ...oldData, data: [newOrder, ...oldTasks] };
+      });
+    });
+
+    // 4. Listen for Orders Taken by others / Cancelled by buyers
+    socket.on('order_removed_from_radar', (orderId) => {
+      console.log("ORDER REMOVED:", orderId);
+      // Instantly remove the order from React Query's cache
+      queryClient.setQueryData(['availableTasks'], (oldData) => {
+        if (!oldData) return oldData;
+        const oldTasks = Array.isArray(oldData.data) ? oldData.data : [];
+        return { ...oldData, data: oldTasks.filter(o => o._id !== orderId) };
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [queryClient]);
 
   useEffect(() => {
     if (activeMission) onLock && onLock(true);

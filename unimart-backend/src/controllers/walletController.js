@@ -85,7 +85,7 @@ exports.verifyTopUpPayment = async (req, res) => {
         $inc: { uniCoins: trueAmountPaid },
         $push: { successfulPayments: razorpay_payment_id } 
       },
-      { new: true } // Return the updated document
+      {returnDocument: 'after' } // Return the updated document
     );
 
     if (!updatedUser) {
@@ -153,7 +153,7 @@ exports.razorpayWebhook = async (req, res) => {
           $inc: { uniCoins: amountPaid },
           $push: { successfulPayments: paymentId } 
         },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (updatedUser) {

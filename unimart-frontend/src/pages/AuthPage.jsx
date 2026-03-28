@@ -109,7 +109,7 @@ const AuthPage = () => {
       case 'OTP': return { title: 'Check Your Email', sub: 'Enter the 6-digit verification code.' };
       case 'FORGOT_PASSWORD': return { title: 'Reset Password', sub: "Enter your email to receive a recovery code." };
       case 'RESET_PASSWORD': return { title: 'Secure Your Account', sub: 'Enter the recovery code and your new password.' };
-      case 'LOGIN': return { title: 'Welcome Back', sub: 'Securely access the UniMart network.' };
+      case 'LOGIN': return { title: 'Welcome Back', sub: 'Securely access the TheUniMart network.' };
       default: return { title: 'Create Account', sub: 'Join the student delivery ecosystem.' };
     }
   };
@@ -122,7 +122,7 @@ const AuthPage = () => {
         <div className="animate-in fade-in slide-in-from-left-8 duration-700 relative z-10 w-full h-full flex flex-col justify-center">
           <div className="relative z-20 flex flex-col items-start xl:-translate-x-8">
             <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full font-bold text-xs text-orange-600 shadow-sm border border-orange-50 mb-7">
-              <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span> UniMart Campus Network
+              <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span> TheUniMart Campus Network
             </div>
             <h1 className="text-[3rem] lg:text-[4rem] leading-[1.1] font-black text-gray-900 mb-6 tracking-tight">
               Fastest <br /><span className="text-orange-500">Delivery</span> & <br />Easy <span className="text-orange-500">Pickup.</span>
@@ -132,7 +132,7 @@ const AuthPage = () => {
             </p>
           </div>
         </div>
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-500px h-500px bg-orange-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
       </div>
 
       {/* --- FORM SECTION (Right - Scrollable) --- */}
@@ -198,6 +198,7 @@ const AuthPage = () => {
                         {[...Array(7)].map((_, i) => <option key={`BH-${i+1}`} value={`BH-${i+1}`}>BH-{i+1}</option>)}
                         {[...Array(3)].map((_, i) => <option key={`BS-${i+8}`} value={`BS-${i+8}`}>BS-{i+8}</option>)}
                         {[...Array(7)].map((_, i) => <option key={`GH-${i+1}`} value={`GH-${i+1}`}>GH-{i+1}</option>)}
+                        <option value="Boys Apartment">Boys Apartment</option>
                       </select>
                     </div>
                   </div>

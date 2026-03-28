@@ -13,7 +13,7 @@ exports.getCustomerDashboard = async (req, res) => {
   try {
     const myOrders = await Order.find({ buyerId: req.user._id })
       .sort({ createdAt: -1 })
-      .populate('runnerId', 'name rating'); 
+      .populate('runnerId', 'name rating phoneNumber'); 
 
     res.status(200).json({ success: true, count: myOrders.length, data: myOrders });
   } catch (error) {
@@ -65,7 +65,7 @@ exports.getActiveRunnerMission = async (req, res) => {
       status: { $in: ['ACCEPTED', 'PICKED_UP'] } 
     })
     .select('-deliveryPIN')
-    .populate('buyerId', 'name hostelBlock');
+    .populate('buyerId', 'name hostelBlock phoneNumber');
 
     if (!activeMission) {
       return res.status(200).json({ success: true, hasActiveMission: false });
@@ -108,6 +108,12 @@ exports.createOrder = async (req, res) => {
       pickupLocation: { type: 'Point', coordinates: pickupCoordinates },
       dropoffLocation: { type: 'Point', coordinates: dropoffCoordinates }
     });
+
+    const io = req.app.get('io');
+    // Create a safe version of the order to broadcast (NEVER send the PIN to the radar)
+    const safeBroadcastOrder = newOrder.toObject();
+    delete safeBroadcastOrder.deliveryPIN;
+    io.to('available_orders_radar').emit('new_order_alert', safeBroadcastOrder);
 
     res.status(201).json({ 
       success: true, 
@@ -166,6 +172,15 @@ exports.cancelOrderAsBuyer = async (req, res) => {
     order.status = 'CANCELLED';
     await order.save();
 
+    const io = req.app.get('io');
+    if (order.runnerId) {
+      // If a runner was assigned, tell them to stand down
+      io.to(order.runnerId.toString()).emit('order_status_update', order);
+    } else {
+      // If it was still pending, remove it from the global radar
+      io.to('available_orders_radar').emit('order_removed_from_radar', orderId);
+    }
+
     res.status(200).json({ success: true, message: 'Order cancelled successfully.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -184,7 +199,7 @@ exports.acceptOrder = async (req, res) => {
     const updatedRunner = await User.findOneAndUpdate(
       { _id: runnerId, uniCoins: { $gte: 10 } },  //tweak this for MAB
       { $inc: { uniCoins: -5 } },               
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updatedRunner) {
@@ -195,7 +210,7 @@ exports.acceptOrder = async (req, res) => {
     const securedOrder = await Order.findOneAndUpdate(
       { _id: orderId, status: 'PENDING' }, 
       { status: 'ACCEPTED', runnerId: runnerId },
-      { new: true } 
+      { returnDocument: 'after' } 
     ).populate('buyerId', 'name hostelBlock');
 
     // 3. THE ROLLBACK 
@@ -210,6 +225,13 @@ exports.acceptOrder = async (req, res) => {
     }
     const safeOrder = securedOrder.toObject();
     delete safeOrder.deliveryPIN;
+
+    const io = req.app.get('io');
+    // Tell the specific buyer their order was accepted
+    io.to(securedOrder.buyerId._id.toString()).emit('order_status_update', safeOrder);
+    // Tell all other runners to remove this order from their screen
+    io.to('available_orders_radar').emit('order_removed_from_radar', orderId);
+
     res.status(200).json({ success: true, message: 'Mission accepted! 5 UniCoins deducted.', data: safeOrder });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -246,6 +268,9 @@ exports.markAsPickedUp = async (req, res) => {
     const safeOrder = order.toObject();
     delete safeOrder.deliveryPIN;
 
+    const io = req.app.get('io');
+    io.to(order.buyerId.toString()).emit('order_status_update', safeOrder);
+
     res.status(200).json({ 
       success: true, 
       message: 'Food picked up! Head to the drop-off location.', 
@@ -281,6 +306,12 @@ exports.verifyDelivery = async (req, res) => {
     // FIX: Set to 'DELIVERED' to match the schema
     order.status = 'DELIVERED';
     await order.save();
+
+    const io = req.app.get('io');
+    // We send a safe version so we don't broadcast the PIN back unnecessarily 
+    const safeOrder = order.toObject();
+    delete safeOrder.deliveryPIN;
+    io.to(order.buyerId.toString()).emit('order_status_update', safeOrder);
 
     // Increment runner's stats
     const runner = await User.findById(runnerId);
@@ -320,6 +351,9 @@ exports.abortOrder = async (req, res) => {
     // Cancel the order and unassign the runner
     order.status = 'CANCELLED';
     await order.save();
+
+    const io = req.app.get('io');
+    io.to(order.buyerId.toString()).emit('order_status_update', order);
 
     // REFUND THE TAX: Give the runner back their 5 UniCoins
     const runner = await User.findById(runnerId);

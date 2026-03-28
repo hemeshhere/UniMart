@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
   hostel: {
     type: String,
     required: [true, 'Please select your hostel'],
-    enum: ['BH-1', 'BH-2', 'BH-3', 'BH-4', 'BH-5', 'BH-6', 'BH-7', 'BS-8', 'BS-9', 'BS-10', 'GH-1', 'GH-2', 'GH-3', 'GH-4', 'GH-5', 'GH-6','GH-7'] 
+    enum: ['Boys Apartment','BH-1', 'BH-2', 'BH-3', 'BH-4', 'BH-5', 'BH-6', 'BH-7', 'BS-8', 'BS-9', 'BS-10', 'GH-1', 'GH-2', 'GH-3', 'GH-4', 'GH-5', 'GH-6','GH-7'] 
   },
   roomNumber: {
     type: String,
