@@ -49,18 +49,22 @@ function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-          ? 'bg-white/95 backdrop-blur-lg shadow-lg border-b border-slate-100'
-          : 'bg-transparent'
+        ? 'bg-white/95 backdrop-blur-lg shadow-lg border-b border-slate-100'
+        : 'bg-transparent'
         }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between relative">
+        {/* Glow behind UniMart logo */}
+        {!scrolled && <div className="absolute left-2 top-1/2 -translate-y-1/2 w-32 h-12 bg-orange-500/20 rounded-full blur-2xl pointer-events-none" />}
+        {/* Glow behind Get Started button */}
+        {!scrolled && <div className="absolute right-2 top-1/2 -translate-y-1/2 w-32 h-12 bg-orange-500/25 rounded-full blur-2xl pointer-events-none" />}
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-md shadow-orange-200">
             <ShoppingBag size={18} className="text-white" strokeWidth={2.5} />
           </div>
           <span className={`font-extrabold text-xl tracking-tight transition-colors ${scrolled ? 'text-[#1c2438]' : 'text-white'}`}>
-            Uni<span className="text-orange-400">Mart</span>
+            The<span className="text-orange-400">UniMart</span>
           </span>
         </div>
 
@@ -76,8 +80,8 @@ function Navbar() {
           <button
             onClick={() => navigate('/login')}
             className={`text-sm font-semibold transition-all hidden sm:block ml-2 pl-4 border-l ${scrolled
-                ? 'text-slate-600 hover:text-orange-500 border-slate-200'
-                : 'text-white/80 hover:text-white border-white/20'
+              ? 'text-slate-600 hover:text-orange-500 border-slate-200'
+              : 'text-white/80 hover:text-white border-white/20'
               }`}
           >
             Log In
@@ -105,7 +109,7 @@ function Hero() {
       <div className="absolute inset-0 bg-gradient-to-br from-[#0f0f0f] via-[#1a1208] to-[#1c1515]" />
 
       {/* Glows */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[180px] bg-orange-500/12 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-red-500/5 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Floating food emojis */}
@@ -239,34 +243,34 @@ function CategoryStrip() {
 function JourneyMap() {
   const steps = [
     {
-      emoji: '🛒',
+      icon: <ShoppingBag size={24} className="text-orange-500" />,
       title: 'Order & Broadcast',
       desc: 'User orders on the platform → The request instantly appears on the live Runner Dashboard.',
-      color: 'from-orange-400 to-orange-600',
+      color: 'bg-orange-50 ring-orange-100',
     },
     {
-      emoji: '✋',
+      icon: <Bike size={24} className="text-blue-500" />,
       title: 'The Acceptance',
       desc: 'A nearby Runner clicks "Accept" (Runner must maintain > ₹10 in their secure wallet).',
-      color: 'from-blue-400 to-blue-600',
+      color: 'bg-blue-50 ring-blue-100',
     },
     {
-      emoji: '🔐',
+      icon: <ShieldCheck size={24} className="text-violet-500" />,
       title: 'The Security Pin',
       desc: 'A unique, secure 4-digit PIN is generated after pick-up and shown only to the User.',
-      color: 'from-violet-400 to-violet-600',
+      color: 'bg-violet-50 ring-violet-100',
     },
     {
-      emoji: '🤝',
+      icon: <RefreshCw size={24} className="text-emerald-500" />,
       title: 'The Exchange',
       desc: 'Runner arrives with food → User provides the PIN → Runner enters PIN in-app to verify.',
-      color: 'from-emerald-400 to-emerald-600',
+      color: 'bg-emerald-50 ring-emerald-100',
     },
     {
-      emoji: '💸',
+      icon: <Wallet size={24} className="text-rose-500" />,
       title: 'The Payoff',
       desc: 'PIN verified! User pays the runner directly — Cash or UPI — right there at handoff. Instant, no middleman.',
-      color: 'from-pink-400 to-red-500',
+      color: 'bg-rose-50 ring-rose-100',
     },
   ];
 
@@ -296,10 +300,10 @@ function JourneyMap() {
               variants={fadeUp}
               className="relative bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:shadow-slate-100 transition-all duration-300 group flex flex-col items-center text-center"
             >
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center text-2xl shadow-lg mb-5 group-hover:scale-110 transition-transform`}>
-                {step.emoji}
+              <div className={`w-14 h-14 rounded-2xl ${step.color} ring-1 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
+                {step.icon}
               </div>
-              <span className="absolute top-4 right-4 w-6 h-6 rounded-full bg-slate-100 text-slate-400 text-xs font-black flex items-center justify-center">
+              <span className="absolute top-4 right-4 w-6 h-6 rounded-full bg-slate-50 text-slate-400 text-xs font-black border border-slate-100 flex items-center justify-center">
                 {index + 1}
               </span>
               <h3 className="text-base font-extrabold text-[#1c2438] mb-2">{step.title}</h3>
@@ -321,22 +325,22 @@ function JourneyMap() {
 function StatsRow() {
   const stats = [
     { value: '₹20', label: 'Min. Runner Deposit', icon: <Wallet size={20} className="text-orange-500" /> },
-    { value: '₹5', label: 'Flat Platform Fee', icon: <RefreshCw size={20} className="text-emerald-500" /> },
+    { value: '₹5', label: 'Deducted per delivery from runner wallet ', icon: <RefreshCw size={20} className="text-emerald-500" /> },
     { value: '100%', label: 'Earnings Kept', icon: <TrendingUp size={20} className="text-blue-500" /> },
     { value: '4-digit', label: 'PIN Security', icon: <ShieldCheck size={20} className="text-violet-500" /> },
   ];
   return (
     <section className="py-16 bg-[#f8f9fb]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
           {stats.map((s, i) => (
-            <AnimatedSection key={i} delay={i * 0.1}>
-              <div className="bg-white rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <AnimatedSection key={i} delay={i * 0.1} className="h-full">
+              <div className="h-full bg-white rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center border border-slate-100 shadow-sm hover:shadow-md transition-all group min-h-[160px]">
+                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shrink-0">
                   {s.icon}
                 </div>
-                <div className="text-3xl sm:text-4xl font-black text-[#1c2438] mb-1">{s.value}</div>
-                <div className="text-xs sm:text-sm text-slate-500 font-semibold">{s.label}</div>
+                <div className="text-3xl sm:text-4xl font-black text-[#1c2438] mb-1 leading-none">{s.value}</div>
+                <div className="text-xs sm:text-sm text-slate-500 font-semibold mt-1 leading-snug">{s.label}</div>
               </div>
             </AnimatedSection>
           ))}
@@ -449,49 +453,80 @@ function DualRole() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-20 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-orange-600 to-red-600" />
-      <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-      <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl" />
+    <section className="py-24 bg-linear-to-b from-[#1c1917] to-[#0c0a09] relative overflow-hidden">
+      {/* Subtle glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[200px] bg-orange-500/8 rounded-full blur-[80px] pointer-events-none" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-8 text-center">
-        <AnimatedSection>
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-              <ShoppingBag size={28} className="text-white" />
-            </div>
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              <RefreshCw size={16} className="text-white" />
-            </div>
-            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-              <Bike size={28} className="text-white" />
-            </div>
-          </div>
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
 
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6 leading-tight">
-            One Account.<br />Two Ways to Campus.
-          </h2>
-          <p className="text-lg sm:text-xl text-orange-100 max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
-            Order from your college canteen right to your desk — or become a runner and turn your free time into real cash. Peer-to-peer, student-powered.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/login', { state: { defaultMode: 'REGISTER' } })}
-              className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-white text-orange-600 font-black text-lg shadow-2xl hover:shadow-white/20 transition-all"
-            >
-              Create Your Account
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/login')}
-              className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-white/10 backdrop-blur-sm border-2 border-white/40 text-white font-bold text-lg hover:bg-white/20 transition-all"
-            >
-              Log In
-            </motion.button>
-          </div>
-        </AnimatedSection>
+          {/* Left — text */}
+          <AnimatedSection>
+            <span className="inline-flex items-center gap-2 text-xs font-bold text-orange-400 uppercase tracking-widest bg-orange-500/10 border border-orange-500/20 px-3 py-1.5 rounded-full mb-8">
+              One account, two roles
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-[1.05] mb-6">
+              Order.<br />Deliver.<br /><span className="text-orange-500">Switch anytime.</span>
+            </h2>
+            <p className="text-slate-400 text-base leading-relaxed max-w-sm mb-10">
+              Order from your college canteen to your desk, or flip to Runner mode and earn real cash in your free time. Same account, same app.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <motion.button
+                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/login', { state: { defaultMode: 'REGISTER' } })}
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm rounded-full shadow-lg shadow-orange-500/20 transition-all"
+              >
+                <ShoppingBag size={16} /> Create account
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/login')}
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-sm rounded-full transition-all"
+              >
+                Log in
+              </motion.button>
+            </div>
+          </AnimatedSection>
+
+          {/* Right — two role cards */}
+          <AnimatedSection delay={0.15} className="grid grid-cols-1 gap-4">
+            {[
+              {
+                icon: <ShoppingBag size={22} className="text-orange-500" />,
+                iconBg: 'bg-orange-500/10',
+                role: 'Buyer',
+                tag: 'Order',
+                tagColor: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
+                desc: 'Browse the canteen menu, place an order, and track your runner in real time. Pay directly at drop-off.',
+                border: 'border-white/8 hover:border-orange-500/30',
+              },
+              {
+                icon: <Bike size={22} className="text-emerald-400" />,
+                iconBg: 'bg-emerald-500/10',
+                role: 'Runner',
+                tag: 'Earn',
+                tagColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+                desc: 'Accept nearby orders, deliver food on campus, and collect payment — Cash or UPI — right at hand-off.',
+                border: 'border-white/8 hover:border-emerald-500/30',
+              },
+            ].map((card, i) => (
+              <div key={i} className={`bg-white/4 backdrop-blur-sm border ${card.border} rounded-2xl p-6 flex items-start gap-5 transition-all duration-300 group`}>
+                <div className={`w-12 h-12 rounded-xl ${card.iconBg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                  {card.icon}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-white font-black text-base">{card.role}</h3>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest border px-2 py-0.5 rounded-full ${card.tagColor}`}>{card.tag}</span>
+                  </div>
+                  <p className="text-slate-400 text-sm leading-relaxed">{card.desc}</p>
+                </div>
+              </div>
+            ))}
+          </AnimatedSection>
+
+        </div>
       </div>
     </section>
   );
@@ -598,7 +633,7 @@ function InfoModal({ type, onClose }) {
   const { title, content, customContent } = MODAL_DATA[type];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-[#1c2438]/80 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-5 bg-[#1c2438]/80 backdrop-blur-md" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -643,14 +678,14 @@ function Footer({ onOpenModal }) {
                 <ShoppingBag size={18} className="text-white" />
               </div>
               <span className="font-extrabold text-white text-2xl tracking-tight">
-                Uni<span className="text-orange-400">Mart</span>
+                The<span className="text-orange-400">UniMart</span>
               </span>
             </div>
             <p className="text-slate-500 text-base leading-relaxed max-w-sm mb-8">
               Revolutionizing campus dining through peer-to-peer delivery.
               By students, for students. Fast, affordable, and community-driven.
             </p>
-            <div className="flex gap-4">
+            {/* <div className="flex gap-4">
               <a href="#" className="w-10 h-10 rounded-full bg-[#1c2438] flex items-center justify-center text-slate-400 hover:bg-orange-500 hover:text-white transition-all hover:-translate-y-1">
                 <Instagram size={18} />
               </a>
@@ -660,7 +695,7 @@ function Footer({ onOpenModal }) {
               <a href="#" className="w-10 h-10 rounded-full bg-[#1c2438] flex items-center justify-center text-slate-400 hover:bg-orange-500 hover:text-white transition-all hover:-translate-y-1">
                 <Mail size={18} />
               </a>
-            </div>
+            </div> */}
           </div>
 
           {/* Platform Links */}
