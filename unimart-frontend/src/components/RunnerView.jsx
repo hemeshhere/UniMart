@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback , useContext} from 'react';
 import { io } from "socket.io-client";
+import { AuthContext } from '../context/AuthContext';
 import {
-  Zap, Package, MapPin, DollarSign, Clock, CheckCircle,
+  Zap, Package, MapPin, IndianRupee, Clock, CheckCircle,
   AlertTriangle, RefreshCw, Bike, ShieldCheck, XCircle, Loader
 } from 'lucide-react';
 import {
@@ -10,6 +11,7 @@ import {
   getActiveRunnerMission,
   markPickedUp,
   verifyDeliveryPIN,
+  abortMission
 } from '../services/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -63,13 +65,8 @@ const Toast = ({ message, type = 'info' }) => {
 const PendingOrderCard = ({ order, onAccept, isAccepting }) => {
   const [expanded, setExpanded] = useState(false);
   const items = order.itemDetails?.items || [];
-
-  const [lat, lng] = order.dropoffLocation?.coordinates
-    ? [order.dropoffLocation.coordinates[1].toFixed(4), order.dropoffLocation.coordinates[0].toFixed(4)]
-    : ['—', '—'];
-
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col h-full">
       {/* Card Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-50">
         <div className="flex items-center gap-2">
@@ -77,112 +74,142 @@ const PendingOrderCard = ({ order, onAccept, isAccepting }) => {
             <Package size={16} className="text-orange-500" />
           </div>
           <div>
-            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Order</p>
+            <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Order</p>
             <p className="font-black text-gray-900 text-sm">#{shortId(order._id)}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-end gap-1">
           <Badge color="orange">PENDING</Badge>
-          <span className="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
-            <Clock size={11} />
+          <span className="flex items-center gap-1 text-[10px] text-gray-400 font-bold">
+            <Clock size={10} />
             {timeAgo(order.createdAt)}
           </span>
         </div>
       </div>
 
       {/* Card Body */}
-      <div className="px-5 py-4 space-y-3">
-        {/* Pickup — Canteen Name */}
-        <div className="flex items-start gap-2.5">
-          <div className="mt-0.5 w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-            <MapPin size={13} className="text-blue-500" />
+      <div className="px-5 py-4 space-y-4 flex-1">
+        
+        {/* Pickup & Dropoff Timeline */}
+        <div className="relative pl-3 space-y-4">
+          {/* Vertical Dashed Line connecting Pickup and Dropoff */}
+          <div className="absolute left-[23px] top-6 bottom-6 w-px border-l-2 border-dashed border-gray-200"></div>
+
+          {/* Pickup — Canteen Name */}
+          <div className="flex items-start gap-3 relative z-10">
+            <div className="mt-0.5 w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center shrink-0 shadow-sm">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pick up from</p>
+              <p className="font-bold text-gray-900 text-[15px] leading-tight mt-0.5">
+                {order.itemDetails?.canteenName || 'Campus Canteen'}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pick up from</p>
-            <p className="font-bold text-gray-800 text-sm">{order.itemDetails?.canteenName || 'Campus Canteen'}</p>
+
+          {/* Drop-off — 🆕 Now uses the beautifully formatted text string! */}
+          <div className="flex items-start gap-3 relative z-10">
+            <div className="mt-0.5 w-6 h-6 rounded-full bg-green-100 border-2 border-white flex items-center justify-center shrink-0 shadow-sm">
+              <MapPin size={10} className="text-green-600" strokeWidth={3} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deliver to</p>
+              <p className="font-black text-gray-900 text-[15px] leading-tight mt-0.5">
+                {order.deliveryLocation || 'Student Location'}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Drop-off */}
-        <div className="flex items-start gap-2.5">
-          <div className="mt-0.5 w-6 h-6 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
-            <MapPin size={13} className="text-green-500" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Drop off at</p>
-            <p className="font-mono text-gray-700 text-xs">{lat}°N, {lng}°E</p>
-          </div>
-        </div>
+        {/* Divider */}
+        <div className="border-t border-gray-100"></div>
 
         {/* Items — click to expand */}
         <button
           onClick={() => setExpanded(prev => !prev)}
-          className="w-full text-left flex items-start gap-2.5 group"
+          className="w-full text-left flex items-start gap-3 group bg-white hover:bg-gray-50 p-3 -mx-2 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
         >
-          <div className="mt-0.5 w-6 h-6 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
-            <Package size={13} className="text-purple-500" />
+          {/* ICON */}
+          <div className="mt-0.5 w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shrink-0 shadow-sm">
+            <Package size={14} className="text-white" />
           </div>
+
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-              {items.length} Item{items.length !== 1 ? 's' : ''}
-              <span className={`ml-1 text-purple-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}>
+            {/* HEADER */}
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                {items.length} Item{items.length !== 1 ? 's' : ''}
+              </p>
+
+              <span
+                className={`text-gray-400 group-hover:text-purple-500 transition-all duration-200 ${
+                  expanded ? 'rotate-180' : ''
+                }`}
+              >
                 ▾
               </span>
-            </p>
+            </div>
 
-            {/* Collapsed: one-line summary */}
+            {/* COLLAPSED */}
             {!expanded && (
-              <p className="text-sm text-gray-700 truncate group-hover:text-purple-600 transition-colors">
-                {items.map(i => `${i.qty}× ${i.name}`).join(', ')}
+              <p className="text-sm font-medium text-gray-700 truncate group-hover:text-purple-700 transition-colors mt-1">
+                {items
+                  .map(i => `${i.qty}× ${i.name} • ₹${i.price}`)
+                  .join('  |  ')}
               </p>
             )}
 
-            {/* Expanded: each item on its own row */}
+            {/* EXPANDED */}
             {expanded && (
-              <ul className="mt-1.5 space-y-1.5">
+              <ul className="mt-2 space-y-2">
                 {items.map((item, idx) => (
-                  <li key={idx} className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100">
-                    <span className="flex items-center gap-2 text-gray-800 font-medium">
-                      <span className="bg-purple-100 text-purple-700 text-[11px] font-black px-1.5 py-0.5 rounded">
+                  <li
+                    key={idx}
+                    className="flex items-center justify-between text-sm bg-gray-50 rounded-xl px-3 py-2 border border-gray-100 hover:bg-white hover:shadow-sm transition-all"
+                  >
+                    {/* LEFT */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                         {item.qty}×
                       </span>
-                      {item.name}
+
+                      <span className="text-gray-800 font-medium truncate">
+                        {item.name}
+                      </span>
+                    </div>
+
+                    {/* RIGHT */}
+                    <span className="text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-md whitespace-nowrap">
+                      ₹{item.price}
                     </span>
-                    <span className="font-black text-gray-700 text-xs">₹{(item.price * item.qty).toFixed(0)}</span>
                   </li>
                 ))}
-                {/* Subtotal row */}
-                <li className="flex items-center justify-between text-sm px-3 pt-1 border-t border-gray-200 mt-1">
-                  <span className="text-gray-500 font-medium">Items subtotal</span>
-                  <span className="font-black text-gray-900">
-                    ₹{items.reduce((sum, i) => sum + i.price * i.qty, 0).toFixed(0)}
-                  </span>
-                </li>
               </ul>
             )}
           </div>
         </button>
 
-        {/* Payout */}
-        <div className="flex items-center justify-between bg-green-50 border border-green-100 rounded-xl px-4 py-2.5">
-          <div className="flex items-center gap-2">
-            <DollarSign size={15} className="text-green-600" />
-            <span className="text-sm font-bold text-green-700">Your Payout</span>
-          </div>
-          <span className="text-lg font-black text-green-700">₹{order.pricing?.deliveryFee ?? 20}</span>
-        </div>
       </div>
 
-      {/* Accept Button */}
-      <div className="px-5 pb-5">
+      {/* Payout & Accept Button Area */}
+      <div className="px-5 pb-5 mt-auto">
+        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-t-xl px-4 py-3 mb-[-2px] relative z-0">
+          <div className="flex items-center gap-1.5">
+            <IndianRupee size={16} className="text-green-600" strokeWidth={3} />
+            <span className="text-xs font-black uppercase tracking-widest text-green-700">Payout</span>
+          </div>
+          <span className="text-xl font-black text-green-700">₹{order.pricing?.deliveryFee ?? 20}</span>
+        </div>
+
         <button
           id={`accept-btn-${order._id}`}
           onClick={() => onAccept(order._id)}
           disabled={isAccepting}
-          className={`w-full py-3.5 rounded-xl font-black text-sm tracking-wide transition-all duration-200 flex items-center justify-center gap-2
+          className={`w-full py-4 rounded-b-xl rounded-t-none font-black text-sm tracking-wide transition-all duration-200 flex items-center justify-center gap-2 relative z-10
             ${isAccepting
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-900 hover:bg-black text-white active:scale-95 shadow-lg shadow-gray-200'
+              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              : 'bg-gray-900 hover:bg-black text-white active:scale-[0.98] shadow-lg shadow-gray-200'
             }`}
         >
           {isAccepting ? (
@@ -208,6 +235,17 @@ const PendingOrderCard = ({ order, onAccept, isAccepting }) => {
 const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoading, abortLoading }) => {
   const [pin, setPin] = useState('');
   const [verifyLoading, setVerifyLoading] = useState(false);
+  
+  // 🎯 NEW: Mandatory Cancellation States
+  const [showAbortModal, setShowAbortModal] = useState(false);
+  const [selectedReason, setSelectedReason] = useState('');
+
+  const cancellationReasons = [
+    "Item is out of stock",
+    "Canteen is currently closed",
+    "Buyer is not responding",
+    "Personal emergency"
+  ];
 
   const handleVerify = async () => {
     if (pin.length !== 4) return;
@@ -216,11 +254,68 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
     setVerifyLoading(false);
   };
 
+  const confirmAbort = () => {
+    if (!selectedReason) return;
+    onAbort(mission._id, selectedReason);
+    setShowAbortModal(false);
+  };
+
   const statusSteps = ['ACCEPTED', 'PICKED_UP', 'DELIVERED'];
   const currentStep = statusSteps.indexOf(mission.status);
 
   return (
-    <div className="max-w-xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="max-w-xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-400 relative">
+
+      {/* 🛑 THE MANDATORY CANCELLATION MODAL */}
+      {showAbortModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <AlertTriangle size={20} className="text-red-600" />
+              </div>
+              <h3 className="text-lg font-black text-gray-900 leading-tight">Abort Mission?</h3>
+            </div>
+            
+            <p className="text-sm font-medium text-gray-500 mb-5 ml-13">
+              Please select a reason so we can notify the buyer.
+            </p>
+
+            {/* Quick-Select Reason Chips */}
+            <div className="space-y-2.5 mb-6">
+              {cancellationReasons.map((reason, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedReason(reason)}
+                  className={`w-full text-left px-4 py-3.5 rounded-xl border-2 font-bold text-sm transition-all active:scale-[0.98] ${
+                    selectedReason === reason 
+                      ? 'border-red-500 bg-red-50 text-red-700' 
+                      : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200'
+                  }`}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => { setShowAbortModal(false); setSelectedReason(''); }}
+                className="flex-1 py-3.5 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Go Back
+              </button>
+              <button 
+                onClick={confirmAbort}
+                disabled={!selectedReason || abortLoading}
+                className="flex-1 py-3.5 rounded-xl font-black text-white bg-red-600 hover:bg-red-700 transition-all active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100 flex justify-center items-center gap-2"
+              >
+                {abortLoading ? <Loader size={16} className="animate-spin" /> : 'Confirm Abort'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status Banner */}
       <div className="bg-linear-to-r from-gray-900 to-gray-800 rounded-2xl p-5 text-white relative overflow-hidden">
@@ -252,12 +347,37 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
           <Package size={15} className="text-orange-500" />
           Mission Details — #{shortId(mission._id)}
         </h3>
-        <div className="text-sm text-gray-600 space-y-2">
-          <p><span className="font-bold text-gray-800">Canteen:</span> {mission.itemDetails?.canteenName}</p>
-          <p><span className="font-bold text-gray-800">Items:</span> {mission.itemDetails?.items?.map(i => `${i.qty}× ${i.name}`).join(', ')}</p>
-          <p><span className="font-bold text-gray-800">Buyer pays at door:</span> <span className="text-orange-600 font-black">₹{mission.pricing?.totalToPayAtDoor}</span></p>
-          <p><span className="font-bold text-gray-800">Your cut:</span> <span className="text-green-600 font-black">₹{mission.pricing?.deliveryFee}</span></p>
-          {mission.buyerId?.name && <p><span className="font-bold text-gray-800">Buyer:</span> {mission.buyerId.name}</p>}
+        
+        <div className="text-sm text-gray-600 space-y-2.5 mt-1">
+          <p className="flex items-start gap-2">
+            <span className="font-bold text-gray-800 min-w-[70px]">Canteen:</span> 
+            <span className="font-medium text-gray-900">{mission.itemDetails?.canteenName}</span>
+          </p>
+
+          <p className="flex items-start gap-2">
+            <span className="font-bold text-gray-800 min-w-[70px]">Deliver to:</span> 
+            <span className="font-black text-green-800 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
+              {mission.deliveryLocation || 'Student Location'}
+            </span>
+          </p>
+
+          <p className="flex items-start gap-2">
+            <span className="font-bold text-gray-800 min-w-[70px]">Items:</span> 
+            <span className="font-medium text-gray-900">
+              {mission.itemDetails?.items?.map(i => `${i.qty}× ${i.name}`).join(', ')}
+            </span>
+          </p>
+
+          <div className="border-t border-gray-100 pt-2 mt-2 space-y-2">
+            <p className="flex justify-between items-center">
+              <span className="font-bold text-gray-800">Buyer pays at door:</span> 
+              <span className="text-orange-600 font-black text-base">₹{mission.pricing?.totalToPayAtDoor}</span>
+            </p>
+            <p className="flex justify-between items-center">
+              <span className="font-bold text-gray-800">Your cut:</span> 
+              <span className="text-green-600 font-black text-base">₹{mission.pricing?.deliveryFee}</span>
+            </p>
+          </div>
         </div>
       </div>
 
@@ -265,7 +385,6 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
       {mission.buyerId && (
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="flex items-center gap-3">
-            {/* Buyer Avatar (Orange theme to match the Buyer's view) */}
             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-black text-lg">
               {mission.buyerId.name?.charAt(0)}
             </div>
@@ -275,7 +394,6 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
             </div>
           </div>
           
-          {/* 📞 Call Button (Matches Buyer's Green Style) */}
           {mission.buyerId.phoneNumber && (
             <a
               href={`tel:${mission.buyerId.phoneNumber}`}
@@ -302,9 +420,8 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
         </button>
       )}
 
-      {/* PIN Verify — only once food has been collected */}
+      {/* PIN Verify */}
       {mission.status === 'PICKED_UP' && (
-
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck size={18} className="text-green-500" />
@@ -330,19 +447,18 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
               {verifyLoading ? 'Verifying…' : 'Verify Delivery'}
             </button>
           </div>
-
         </div>
       )}
 
-      {/* Abort */}
+      {/* 🎯 NEW: Abort Trigger Button */}
       {mission.status === 'ACCEPTED' && (
         <button
-          onClick={() => onAbort(mission._id)}
+          onClick={() => setShowAbortModal(true)} // Opens the modal instead of firing API directly
           disabled={abortLoading}
           className="w-full py-3.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl border border-red-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          {abortLoading ? <Loader size={16} className="animate-spin" /> : <XCircle size={16} />}
-          {abortLoading ? 'Aborting…' : 'Abort Mission (refunds 5 coins)'}
+          <XCircle size={16} />
+          Abort Mission (refunds 5 coins)
         </button>
       )}
     </div>
@@ -353,7 +469,7 @@ const ActiveMissionCard = ({ mission, onPickedUp, onVerify, onAbort, pickupLoadi
 
 const RunnerView = ({ onLock }) => {
   const queryClient = useQueryClient();
-
+  const { user, updateUser } = useContext(AuthContext);
   const [acceptingId, setAcceptingId] = useState(null);
   const [pickupLoading, setPickupLoading] = useState(false);
   const [abortLoading, setAbortLoading] = useState(false);
@@ -432,6 +548,9 @@ const RunnerView = ({ onLock }) => {
     setAcceptingId(orderId);
     try {
       await acceptOrderAsRunner(orderId);
+      if (user) {
+        updateUser({ uniCoins: user.uniCoins - 5 });
+      }
       queryClient.invalidateQueries({ queryKey: ['activeRunnerMission'] });
       queryClient.invalidateQueries({ queryKey: ['availableTasks'] });
       showToast('Mission secured! 5 UniCoins deducted.', 'success');
@@ -474,10 +593,13 @@ const RunnerView = ({ onLock }) => {
     }
   };
 
-  const handleAbort = async (orderId) => {
+  const handleAbort = async (orderId, reason) => {
     setAbortLoading(true);
     try {
-      await abortMission(orderId);
+      await abortMission(orderId, reason);
+      if (user) {
+        updateUser({ uniCoins: user.uniCoins + 5 });
+      }
       queryClient.invalidateQueries({ queryKey: ['activeRunnerMission'] });
       queryClient.invalidateQueries({ queryKey: ['availableTasks'] });
       showToast('Mission aborted. 5 UniCoins refunded.', 'info');

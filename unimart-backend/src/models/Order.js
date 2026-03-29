@@ -31,11 +31,18 @@ const orderSchema = new mongoose.Schema({
     enum: ['PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERED', 'CANCELLED'],
     default: 'PENDING'
   },
+  cancellationReason: {
+    type: String,
+    default: null
+  },
   deliveryPIN: {
     type: String,
     required: true // The randomly generated 4-digit code
   },
-
+  deliveryLocation: {
+    type: String,
+    required: true
+  },
   // --- THE GEOSPATIAL MAP DATA ---
   pickupLocation: {
     type: { type: String, enum: ['Point'], default: 'Point' },

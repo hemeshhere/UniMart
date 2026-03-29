@@ -560,7 +560,19 @@ const MODAL_DATA = {
   },
   'contact': {
     title: 'Contact Us',
-    content: 'We are proudly built by students for students. Reach out directly to the UniMart core team at support@unimart.campus or visit us in the CS Building Lab during office hours.',
+    content: (
+      <>
+        We are proudly built by students for students. Reach out directly to the UniMart core team at dark07axel@gmail.com or message us on Telegram:{' '}
+        <a 
+          href="https://t.me/UniMartHelp" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-500 underline"
+        >
+          https://t.me/UniMartHelp
+        </a>
+      </>
+    ),
   },
   'developer': {
     title: 'Meet the Developers',

@@ -86,7 +86,7 @@ exports.getActiveRunnerMission = async (req, res) => {
 // @access  Private (Buyer)
 exports.createOrder = async (req, res) => {
   try {
-    const { itemDetails, canteenId, pricing, pickupCoordinates, dropoffCoordinates } = req.body;
+    const { itemDetails, canteenId, pricing, deliveryLocation, pickupCoordinates, dropoffCoordinates } = req.body;
     const canteen = await Canteen.findById(canteenId).select('packingFee').lean();
     if (!canteen) {
       return res.status(404).json({ success: false, message: "Canteen not found" });
@@ -105,6 +105,7 @@ exports.createOrder = async (req, res) => {
         totalToPayAtDoor: verifiedTotal
       },
       deliveryPIN: generatedPIN,
+      deliveryLocation: deliveryLocation,
       pickupLocation: { type: 'Point', coordinates: pickupCoordinates },
       dropoffLocation: { type: 'Point', coordinates: dropoffCoordinates }
     });
@@ -331,7 +332,7 @@ exports.abortOrder = async (req, res) => {
   try {
     const orderId = req.params.id;
     const runnerId = req.user._id;
-
+    const { reason } = req.body;
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
     if (order.runnerId.toString() !== runnerId.toString()) return res.status(403).json({ success: false, message: 'Unauthorized' });
@@ -350,6 +351,7 @@ exports.abortOrder = async (req, res) => {
 
     // Cancel the order and unassign the runner
     order.status = 'CANCELLED';
+    order.cancellationReason = reason || "No reason provided";
     await order.save();
 
     const io = req.app.get('io');

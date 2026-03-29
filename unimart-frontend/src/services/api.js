@@ -135,8 +135,8 @@ export const verifyDeliveryPIN = async (orderId, pin) => {
 };
 
 // Runner aborts the mission (refunds 5 UniCoins)
-export const abortMission = async (orderId) => {
-  const response = await api.post(`/orders/${orderId}/abort`);
+export const abortMission = async (orderId, reason) => {
+  const response = await api.post(`/orders/${orderId}/abort`, {reason});
   return response.data;
 };
 

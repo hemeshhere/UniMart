@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, ShoppingBag, Plus, Minus, ArrowLeft, MapPin, Clock, Bike, CheckCircle, ShieldCheck, UserCheck, AlertTriangle } from 'lucide-react';
+import { io } from "socket.io-client";
+import { Store, ShoppingBag, Plus, Minus, ArrowLeft, MapPin, Clock, Bike, CheckCircle, ShieldCheck, UserCheck, AlertTriangle, XCircle } from 'lucide-react';
 import { getCanteens, getActiveCustomerOrder, cancelOrder } from '../services/api';
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const BuyerView = ({ onLock }) => {
   const navigate = useNavigate();
-
+  const shortId = (id = '') => id.slice(-6).toUpperCase();
   const queryClient = useQueryClient();
 
   // Modal & Loading States
@@ -34,8 +35,9 @@ const BuyerView = ({ onLock }) => {
 
   // Derived State
   const actualOrder = Array.isArray(orderRes?.data) ? orderRes.data[0] : orderRes?.data;
-  const activeStatuses = ['PENDING', 'ACCEPTED', 'PICKED_UP'];
-  const activeOrder = (actualOrder && actualOrder.status && activeStatuses.includes(actualOrder.status)) ? actualOrder : null;
+  const activeStatuses = ['PENDING', 'ACCEPTED', 'PICKED_UP', 'CANCELLED'];
+  const isDismissed = actualOrder ? localStorage.getItem(`dismissed_${actualOrder._id}`) === 'true' : false;
+  const activeOrder = (actualOrder && actualOrder.status && activeStatuses.includes(actualOrder.status) && !isDismissed) ? actualOrder : null;
 
   const canteens = Array.isArray(canteensRes?.data) ? canteensRes.data : (Array.isArray(canteensRes) ? canteensRes : []);
   const loading = orderLoading || (!activeOrder && canteensLoading);
@@ -45,6 +47,24 @@ const BuyerView = ({ onLock }) => {
     if (activeOrder) onLock && onLock(true);
     else onLock && onLock(false);
   }, [activeOrder, onLock]);
+
+  useEffect(() => {
+    // 1. Connect to the WebSocket
+    const backendUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const socket = io(backendUrl);
+
+    // 2. Listen for status updates (sent from the Runner's Abort/Pickup/Verify actions)
+    socket.on('order_status_update', (updatedOrder) => {
+      console.log("Order status changed to:", updatedOrder.status);
+      
+      // Update the React Query cache instantly so the UI switches views
+      queryClient.setQueryData(['activeCustomerOrder'], { data: updatedOrder });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [queryClient]);
 
   // --- 2. SEAMLESS NAVIGATION ---
   const handleCanteenClick = (canteen) => {
@@ -78,6 +98,66 @@ const BuyerView = ({ onLock }) => {
   // VIEW 1: THE ACTIVE ORDER DASHBOARD (LOCKED)
   // ==========================================
   if (activeOrder) {
+    if (activeOrder.status === 'CANCELLED') {
+      return (
+        <div className="max-w-md mx-auto animate-in fade-in zoom-in duration-300">
+          <div className="bg-white rounded-3xl border-2 border-red-100 shadow-2xl overflow-hidden">
+            {/* Red Header */}
+            <div className="bg-red-500 p-8 flex flex-col items-center text-center text-white relative">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <XCircle size={120} />
+              </div>
+              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 backdrop-blur-md">
+                <AlertTriangle size={40} className="text-white" />
+              </div>
+              <h2 className="text-2xl font-black mb-1">Order Cancelled</h2>
+              <p className="text-red-100 text-sm font-bold uppercase tracking-widest">#{shortId(activeOrder._id)}</p>
+            </div>
+
+            {/* The Reason Block */}
+            <div className="p-8 space-y-6">
+              <div className="bg-red-50 rounded-2xl p-5 border border-red-100">
+                <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] mb-2">Reason Provided</p>
+                <p className="text-gray-800 font-bold text-lg italic leading-tight">
+                   "{activeOrder.cancellationReason || "The runner had an emergency and could not complete the mission."}"
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-gray-500">
+                  <Store size={18} className="shrink-0" />
+                  <p className="text-sm font-medium">From <span className="text-gray-900 font-bold">{activeOrder.itemDetails?.canteenName}</span></p>
+                </div>
+                <div className="flex items-center gap-3 text-gray-500">
+                  <ShoppingBag size={18} className="shrink-0" />
+                  <p className="text-sm font-medium">Items: {activeOrder.itemDetails?.items?.map(i => i.name).join(', ')}</p>
+                </div>
+              </div>
+
+              {/* Action: Clear and Start Over */}
+              <button 
+                onClick={async () => {
+                   // This removes the order from the buyer's dashboard so they can order again
+                   if (activeOrder?._id) {
+                     localStorage.setItem(`dismissed_${activeOrder._id}`, 'true');
+                   }
+                   queryClient.setQueryData(['activeCustomerOrder'], (oldData) => {
+                     return { ...oldData, data: null }; // clear locally instantly
+                   });
+                   await queryClient.invalidateQueries({ queryKey: ['activeCustomerOrder'] });
+                }}
+                className="w-full py-4 bg-gray-900 hover:bg-black text-white font-black rounded-2xl transition-all active:scale-95 shadow-xl shadow-gray-200"
+              >
+                Dismiss & Order Again
+              </button>
+            </div>
+          </div>
+          <p className="text-center mt-6 text-gray-400 text-xs font-bold px-10">
+            Don't worry, no coins or money were deducted since the delivery was not completed.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="max-w-3xl mx-auto animate-fade-in space-y-6 relative">
 
