@@ -505,7 +505,7 @@ const RunnerView = ({ onLock }) => {
     const backendUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     const socket = io(backendUrl);
     // 2. Join the Radar Room
-    socket.emit('join_runners_room');
+    socket.emit('join_runner_room');
     // 3. Listen for New Orders
     socket.on('new_order_alert', (newOrder) => {
       console.log("NEW ORDER ON RADAR:", newOrder._id);
@@ -559,7 +559,7 @@ const RunnerView = ({ onLock }) => {
       if (err.response?.status === 409) {
         showToast('Too late! Another runner grabbed it.', 'error');
       } else if (err.response?.status === 403) {
-        showToast('Insufficient UniCoins. Please top up.', 'error');
+        showToast('Insufficient UniCoins or less then the limit. Please top up.', 'error');
       } else {
         showToast(msg, 'error');
       }
