@@ -41,7 +41,11 @@ const AuthPage = () => {
     const token = res.token || 'secure-cookie-active';
     if (!userData) throw new Error("Invalid response from server. Missing user data.");
     authenticate(userData, token);
-    navigate('/dashboard'); 
+    if (userData.role === 'admin') {
+      navigate('/hq-command'); 
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const executeRegister = async () => {

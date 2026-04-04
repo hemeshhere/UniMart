@@ -27,7 +27,7 @@ const BuyerView = ({ onLock }) => {
 
   const checkIsCanteenOpen = (dbIsOpen) => {
     const currentHour = new Date().getHours(); 
-    const isTimeValid = currentHour >= 9 && currentHour < 22;
+    const isTimeValid = currentHour >= 9 || currentHour < 6;
     return dbIsOpen && isTimeValid;
   };
 

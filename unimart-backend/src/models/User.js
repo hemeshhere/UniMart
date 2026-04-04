@@ -35,6 +35,11 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please select your gender'],
     enum: ['Male', 'Female', 'Other']
   },
+  role: {
+    type: String,
+    enum: ['student', 'admin'],
+    default: 'student'
+  },
   rating: {
     type: Number,
     default: 5.0

@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import CanteenMenu from './pages/CanteenMenu'; // 🛡️ NEW: Import the Menu Page
 import LandingPage from './pages/LandingPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminRoute from './components/AdminRoutes';
 
 function App() {
   return (
@@ -33,6 +35,10 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route element={<AdminRoute />}>
+            {/* The secret URL you type into your browser */}
+            <Route path="/hq-command" element={<AdminDashboard />} />
+          </Route>
         </Routes>
       </Router>
     </AuthProvider>

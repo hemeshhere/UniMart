@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser');
 
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
-
+const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 
 // Connect Database
@@ -47,6 +47,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/wallet', require('./routes/walletRoutes'));
 app.use('/api/canteens', require('./routes/canteenRoutes'));
+app.use('/api/admin', adminRoutes);
 
 // Error Handler
 app.use(errorHandler);
