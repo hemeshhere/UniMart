@@ -37,6 +37,10 @@
     0%, 100% { transform: translateY(0px) rotate(0deg); }
     50%       { transform: translateY(-15px) rotate(5deg); }
   }
+  @keyframes fadeInUp {
+    0%   { opacity: 0; transform: translateY(16px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
 }
 
 @layer base {

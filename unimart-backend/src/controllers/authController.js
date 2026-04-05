@@ -150,7 +150,14 @@ exports.loginUser = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // FIX 2: Removed the obsolete isVerified check here!
+    // 🚫 BAN GATE: Block before issuing any token (admins are exempt)
+    if (user.isBanned && user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        code: 'USER_BANNED',
+        message: 'Your account has been suspended by the UniMart admin team.'
+      });
+    }
 
     sendTokenResponse(user, 200, res);
   } catch (error) { 

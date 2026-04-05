@@ -16,7 +16,7 @@ const BuyerView = ({ onLock }) => {
   // Modal & Loading States
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  
+
   // ─── NEW: TOAST NOTIFICATION STATE & FUNCTION ───
   const [toast, setToast] = useState(null);
 
@@ -26,8 +26,8 @@ const BuyerView = ({ onLock }) => {
   };
 
   const checkIsCanteenOpen = (dbIsOpen) => {
-    const currentHour = new Date().getHours(); 
-    const isTimeValid = currentHour >= 9 || currentHour < 6;
+    const currentHour = new Date().getHours();
+    const isTimeValid = currentHour >= 9 && currentHour < 22;
     return dbIsOpen && isTimeValid;
   };
 
@@ -70,9 +70,9 @@ const BuyerView = ({ onLock }) => {
     if (!user?._id) return;
     const backendUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     const socket = io(backendUrl);
-    
+
     socket.emit('join_personal_room', user._id);
-    
+
     socket.on('order_status_update', (updatedOrder) => {
       // 1. Instantly and silently fetch the SECURE, fully-populated order from the database
       queryClient.invalidateQueries({ queryKey: ['activeCustomerOrder'] });
@@ -157,7 +157,7 @@ const BuyerView = ({ onLock }) => {
                   {activeOrder.cancellationReason ? "Runner Note" : "Order Status"}
                 </p>
                 <p className="text-gray-800 font-bold text-lg italic leading-tight">
-                   "{activeOrder.cancellationReason || "You successfully cancelled this order."}"
+                  "{activeOrder.cancellationReason || "You successfully cancelled this order."}"
                 </p>
               </div>
 
@@ -172,15 +172,15 @@ const BuyerView = ({ onLock }) => {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={async () => {
-                   if (activeOrder?._id) {
-                     localStorage.setItem(`dismissed_${activeOrder._id}`, 'true');
-                   }
-                   queryClient.setQueryData(['activeCustomerOrder'], (oldData) => {
-                     return { ...oldData, data: null };
-                   });
-                   await queryClient.invalidateQueries({ queryKey: ['activeCustomerOrder'] });
+                  if (activeOrder?._id) {
+                    localStorage.setItem(`dismissed_${activeOrder._id}`, 'true');
+                  }
+                  queryClient.setQueryData(['activeCustomerOrder'], (oldData) => {
+                    return { ...oldData, data: null };
+                  });
+                  await queryClient.invalidateQueries({ queryKey: ['activeCustomerOrder'] });
                 }}
                 className="w-full py-4 bg-gray-900 hover:bg-black text-white font-black rounded-2xl transition-all active:scale-95 shadow-xl shadow-gray-200"
               >
@@ -278,7 +278,7 @@ const BuyerView = ({ onLock }) => {
                 )}
                 <div className="absolute top-4 left-6 w-24 h-24 bg-white/20 rounded-full blur-3xl" />
                 <div className="absolute bottom-4 right-6 w-32 h-32 bg-black/10 rounded-full blur-3xl" />
-                
+
                 <div className="relative z-10 select-none transform transition-transform hover:scale-110 duration-300" style={{ animation: s === 'PICKED_UP' ? 'riderBounce 0.5s ease-in-out infinite alternate' : s === 'PENDING' ? 'float 3s ease-in-out infinite' : 'none' }}>
                   <div className="text-[80px] leading-none drop-shadow-2xl">
                     {s === 'PENDING' && '🕐'}
@@ -287,7 +287,7 @@ const BuyerView = ({ onLock }) => {
                     {s === 'DELIVERED' && '🎉'}
                   </div>
                 </div>
-                
+
                 <div className="absolute bottom-4 left-0 right-0 text-center px-4">
                   <p className="text-white font-black text-xl drop-shadow-md leading-tight">{heroMsg.title}</p>
                   <p className="text-white/80 text-sm font-medium mt-0.5">{heroMsg.sub}</p>
@@ -341,13 +341,13 @@ const BuyerView = ({ onLock }) => {
         {/* ── Beautiful Digital Receipt ── */}
         <div className="bg-white rounded-[24px] shadow-sm border border-gray-200 relative overflow-hidden">
           <div className="h-2 w-full bg-orange-500 absolute top-0 left-0"></div>
-          
+
           <div className="p-6">
             <h3 className="font-black text-gray-900 mb-5 flex items-center gap-2 text-lg">
-              <Utensils size={20} className="text-orange-500" /> 
+              <Utensils size={20} className="text-orange-500" />
               Order Summary
             </h3>
-            
+
             <div className="space-y-4 mb-6">
               {activeOrder.itemDetails?.items?.map((item, idx) => (
                 <div key={idx} className="flex justify-between items-center text-sm group">
@@ -376,7 +376,7 @@ const BuyerView = ({ onLock }) => {
                 <span>Delivery Fee</span>
                 <span className="text-gray-900 font-bold">₹{activeOrder.pricing?.deliveryFee}</span>
               </div>
-              
+
               <div className="flex justify-between items-center mt-2 pt-4 border-t border-gray-100">
                 <span className="font-black text-gray-900 text-lg">Total Amount</span>
                 <span className="text-orange-600 font-black text-2xl">₹{activeOrder.pricing?.totalToPayAtDoor}</span>
@@ -400,7 +400,7 @@ const BuyerView = ({ onLock }) => {
                 <p className="font-black text-gray-900 text-lg">{activeOrder.runnerId.name}</p>
               </div>
             </div>
-            
+
             {activeOrder.runnerId.phoneNumber && (
               <a
                 href={`tel:${activeOrder.runnerId.phoneNumber}`}
@@ -455,7 +455,7 @@ const BuyerView = ({ onLock }) => {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h2 className="text-2xl font-black text-gray-900 tracking-tight">What are you craving?</h2>
@@ -478,8 +478,8 @@ const BuyerView = ({ onLock }) => {
                 key={canteen._id}
                 onClick={() => isActuallyOpen && handleCanteenClick(canteen)}
                 className={`group relative bg-white rounded-[24px] p-5 border-2 transition-all duration-300 overflow-hidden
-                  ${isActuallyOpen 
-                    ? 'border-transparent hover:border-orange-200 shadow-sm hover:shadow-xl hover:-translate-y-1 cursor-pointer' 
+                  ${isActuallyOpen
+                    ? 'border-transparent hover:border-orange-200 shadow-sm hover:shadow-xl hover:-translate-y-1 cursor-pointer'
                     : 'border-gray-100 opacity-60 grayscale cursor-not-allowed'}`}
               >
                 {/* Subtle background glow on hover */}
@@ -492,18 +492,18 @@ const BuyerView = ({ onLock }) => {
                     <div className="bg-gray-50 group-hover:bg-orange-100 p-3.5 rounded-2xl text-gray-400 group-hover:text-orange-500 transition-colors duration-300 transform group-hover:scale-110">
                       <Store size={26} strokeWidth={2.5} />
                     </div>
-                    
+
                     <div className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border backdrop-blur-md
-                      ${isActuallyOpen 
-                        ? 'bg-green-50/80 text-green-600 border-green-200/50 shadow-sm' 
+                      ${isActuallyOpen
+                        ? 'bg-green-50/80 text-green-600 border-green-200/50 shadow-sm'
                         : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                       {isActuallyOpen ? 'Open' : 'Closed'}
                     </div>
                   </div>
-                  
+
                   <h3 className="text-xl font-black text-gray-900 mb-1.5 truncate pr-8">{canteen.name}</h3>
                   <p className="text-gray-500 text-sm flex items-center gap-1.5 font-medium">
-                    <MapPin size={14} className="text-gray-400" /> 
+                    <MapPin size={14} className="text-gray-400" />
                     <span className="truncate">{canteen.location}</span>
                   </p>
                 </div>

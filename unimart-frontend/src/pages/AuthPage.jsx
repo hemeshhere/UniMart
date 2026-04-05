@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, User, Phone, Building, Hash, Users, ArrowLeft, Key, ShieldCheck } from 'lucide-react';
-import { loginUser, registerUser, verifyOTP, forgotPassword, resetPassword } from '../services/api'; // 🆕 Ensure these are exported from your api.js
+import { Mail, Lock, User, Phone, Building, Hash, Users, ArrowLeft, Key, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { loginUser, registerUser, verifyOTP, forgotPassword, resetPassword } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 
 const AuthPage = () => {
@@ -14,6 +14,7 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isBanned, setIsBanned] = useState(false);
 
   // 🆕 Added confirmPassword
   const [formData, setFormData] = useState({
@@ -36,15 +37,24 @@ const AuthPage = () => {
   // --- API ACTIONS ---
 
   const executeLogin = async () => {
-    const res = await loginUser(formData.email, formData.password);
-    const userData = res.data?.user || res.data; 
-    const token = res.token || 'secure-cookie-active';
-    if (!userData) throw new Error("Invalid response from server. Missing user data.");
-    authenticate(userData, token);
-    if (userData.role === 'admin') {
-      navigate('/hq-command'); 
-    } else {
-      navigate('/dashboard');
+    try {
+      const res = await loginUser(formData.email, formData.password);
+      const userData = res.data?.user || res.data; 
+      const token = res.token || 'secure-cookie-active';
+      if (!userData) throw new Error("Invalid response from server. Missing user data.");
+      authenticate(userData, token);
+      if (userData.role === 'admin') {
+        navigate('/hq-command'); 
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      // Check specifically for the banned response code
+      if (err.response?.status === 403 && err.response?.data?.code === 'USER_BANNED') {
+        setIsBanned(true);
+        return; // Don't re-throw — we handle it with the ban screen
+      }
+      throw err; // Re-throw all other errors so handleSubmit can catch them
     }
   };
 
@@ -117,6 +127,64 @@ const AuthPage = () => {
       default: return { title: 'Create Account', sub: 'Join the student delivery ecosystem.' };
     }
   };
+
+  // ─── BAN SCREEN ──────────────────────────────────────────────────────────────
+  if (isBanned) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-3xl shadow-2xl border border-red-100 max-w-md w-full overflow-hidden">
+          {/* Red header stripe */}
+          <div className="bg-red-500 px-8 py-10 flex flex-col items-center text-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="absolute text-white font-black text-6xl select-none" style={{ top: `${Math.random()*100}%`, left: `${Math.random()*100}%`, transform: 'rotate(-20deg)' }}>🚫</div>
+              ))}
+            </div>
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 border-4 border-white/30 backdrop-blur-sm relative z-10">
+              <ShieldAlert size={38} className="text-white" />
+            </div>
+            <h1 className="text-2xl font-black text-white mb-1 relative z-10">Account Suspended</h1>
+            <p className="text-red-100 text-sm font-semibold relative z-10">theunitmart.in</p>
+          </div>
+
+          {/* Body */}
+          <div className="px-8 py-8 space-y-6">
+            <div className="bg-red-50 rounded-2xl p-5 border border-red-100">
+              <p className="text-gray-800 font-semibold text-sm leading-relaxed text-center">
+                Your account has been <span className="font-black text-red-600">banned</span> by the UniMart admin team.
+                You are currently unable to access any services on the platform.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 text-center">Contact to Get Unblocked</p>
+              <a
+                href="https://t.me/UniMartHelp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3.5 bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-200 transition-colors group"
+              >
+                <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-blue-600 transition-colors">
+                  <span className="text-white text-lg">✈️</span>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-blue-400 uppercase tracking-wider">Telegram Support</p>
+                  <p className="text-sm font-black text-blue-800">t.me/UniMartHelp</p>
+                </div>
+              </a>
+            </div>
+
+            <button
+              onClick={() => setIsBanned(false)}
+              className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl text-sm transition-colors"
+            >
+              ← Try a Different Account
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen w-full bg-white overflow-hidden">
